@@ -129,4 +129,9 @@ dmypy.json
 .pyre/
 
 ## Ignore dataset files (.pt)
+datasets
+Article data npy
 *.pt
+
+## Ignore virtual environment (name of venv + /)
+ProjWorkEnv/

@@ -1,33 +1,25 @@
 import torch
 import numpy as np
 
-def augment_Data_TD():
-    raise(NotImplementedError)
+def augment_Data_TD(data, do_jitter = False, do_scaling = False):
+    if do_jitter and do_scaling:
+        aug = jitter(scaling(data))
+    elif do_jitter:
+        aug = jitter(data)
+    elif do_scaling:
+        aug = scaling(data)
+    
+    return aug
 
 def augment_Data_FD():
     raise(NotImplementedError)
 
-def augment_Data(self, XData, yData, subset_range = None,
-             jitter = False, jitter_range = None,
-             phase = False, phase_amount = None):
-        # Augment data to add noise to it for training a model invariant for noise
-        # Add  noise to every observation within each sample
-        if jitter:
-            if subset_range is not None:
-                for i in subset_range:
-                    for j in range(1):
-                        pass
-        else:
-            for j in range(self.__len()):
-                for i in range(len(yData)):
-                    XData[j][i] += np.random.rand(jitter_range)
-            
-        # Add noise to every observation in a sample
-        if phase:
-            for i in range(len(yData)):
-                if subset:
-                    pass
-                else:
-                    XData[i] += phase_amount
-    
-        return XData
+def jitter(data, sigma = 5):
+    # Add noise to every observation within every sample, by sampling from a normal distribution with the same shape as the data
+    noise = np.random.normal(loc = 0, scale = sigma, size = data.shape)
+    return data + noise
+
+def scaling(data, sigma = 0.1):
+    scalingFactor = np.random.normal(loc = 1.0, scale = sigma, size = (data.shape[0], data.shape[2]))
+    return np.multiply(data, scalingFactor[:, np.newaxis, :])
+

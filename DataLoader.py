@@ -36,7 +36,7 @@ class TimeSeriesDataset(Dataset):
             self.X = self.X.permute(0, 2, 1)
 
         if augment: ## Only augment data if we ask for it to be augmented
-            self.X_aug = self.X * augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling)
+            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling)
                 
         # Transfer data to frequency domain using torch.fft (frequency fourier transform)
         self.X_f = fft.fft(self.X).abs()

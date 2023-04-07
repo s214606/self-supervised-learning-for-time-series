@@ -1,0 +1,6 @@
+Visual introduction to Fourier transform:
+https://www.youtube.com/watch?v=spUNpyF58BY
+
+
+Interactive version of fourier transform:
+https://www.jezzamon.com/fourier/

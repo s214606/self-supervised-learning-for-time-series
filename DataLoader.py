@@ -68,9 +68,3 @@ class TimeSeriesDataset(Dataset):
             plt.legend()
             plt.show()
             
-
-SleepEEG = TimeSeriesDataset(dataset=torch.load(os.path.join("datasets", "SleepEEG", "train.pt")), permute = True, augment = True)
-#SleepEEG.plot_sample(OrigxAug=True)
-dataset=torch.load(os.path.join("datasets", "SleepEEG", "train.pt"))
-X = dataset['samples']
-print(X[0])

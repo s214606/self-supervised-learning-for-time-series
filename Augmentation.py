@@ -26,6 +26,26 @@ def scaling(data, sigma = 0.5):
     scalingFactor = np.random.normal(loc = 1.0, scale = sigma, size = (data.shape[0], data.shape[2]))
     return np.multiply(data, scalingFactor[:, np.newaxis, :])
 
+def permute(x, max_segments=5, seg_mode="random"):
+    orig_steps = np.arange(x.shape[2])
+
+    num_segs = np.random.randint(1, max_segments, size=(x.shape[0]))
+
+    ret = np.zeros_like(x)
+    for i, pat in enumerate(x):
+        if num_segs[i] > 1:
+            if seg_mode == "random":
+                split_points = np.random.choice(x.shape[2] - 2, num_segs[i] - 1, replace=False)
+                split_points.sort()
+                splits = np.split(orig_steps, split_points)
+            else:
+                splits = np.array_split(orig_steps, num_segs[i])
+            warp = np.concatenate(np.random.permutation(splits)).ravel()
+            ret[i] = pat[0,warp]
+        else:
+            ret[i] = pat
+    return torch.from_numpy(ret)
+
 """def permute(data, NSeg = 5):
     import time
     start = time.time()

@@ -16,7 +16,7 @@ torch.manual_seed(seed)
 
 class TimeSeriesDataset(Dataset):
     """Load and prepare a dataset for training on a neural network
-    Initializing this class requires that the parameter 'dataset' is inserted as an already loaded torch tensor using torch.load
+    Initializing this class requires that the parameter 'dataset' is inserted as an already loaded torch tensor using torch.load.
     """
     def __init__(self, dataset,
                  augment = False,
@@ -39,16 +39,17 @@ class TimeSeriesDataset(Dataset):
         if self.X.shape.index(min(self.X.shape)) != 1:
             self.X = self.X.permute(0, 2, 1)
 
-        if augment: ## Only augment data if we ask for it to be augmented
-            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_permute = permute)
                 
         # Transfer data to frequency domain using torch.fft (frequency fourier transform)
         self.X_f = fft.fft(self.X).abs()
-        #self.X_aug_f = fft.fft(self.X_aug)
+        
+        if augment: ## Only augment data if we ask for it to be augmented
+            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_permute = permute)
+            #self.X_aug_f = augment_Data_FD(self.X_f)
     
     def __len__(self):
         # Return the length of the dataset
-        return len(self.y)
+        return len(self.X.shape[0])
 
     def plot_sample(self, TxF = False, OrigxAug = False):
         # For iterating over multiple plots: plt.figure, then, plt.add_subplot
@@ -67,4 +68,14 @@ class TimeSeriesDataset(Dataset):
             plt.plot(self.X_aug[plot_idx][0], label = "Augmented")
             plt.legend()
             plt.show()
-            
+    
+def data_generator(sourcedata_path, targetdata_path,
+                   augment = False, jitter = False, scaling = False, permute = False):
+    """Load data for pre-training, fine-tuning and for testing."""
+    train_dataset = torch.load(os.path.join(sourcedata_path, "train.pt"))
+    finetune_dataset = torch.load(os.path.join(targetdata_path, "train.pt"))
+    test_dataset = torch.load(os.path.join(targetdata_path, "test.pt"))
+
+    train_dataset = TimeSeriesDataset(train_dataset, augment, jitter, scaling, permute)
+    finetune_dataset = TimeSeriesDataset(finetune_dataset, augment, jitter, scaling, permute)
+    test_dataset = TimeSeriesDataset(test_dataset, augment, jitter, scaling, permute)

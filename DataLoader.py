@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 import torch.fft as fft
 from Augmentation import augment_Data_FD, augment_Data_TD
 
@@ -21,6 +22,7 @@ class TimeSeriesDataset(Dataset):
     def __init__(self, dataset,
                  augment = False,
                  jitter = False, scaling = False, permute = False):
+        self.augment = augment
         self.X = dataset['samples']
         self.y = dataset['labels']
         self.X_aug = None
@@ -45,11 +47,20 @@ class TimeSeriesDataset(Dataset):
         
         if augment: ## Only augment data if we ask for it to be augmented
             self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_permute = permute)
-            #self.X_aug_f = augment_Data_FD(self.X_f)
-    
+            self.X_aug_f = self.X_f
+    """In order to utilize the functionality of torch.utils.data.Dataloader, it is necessary for the dataloader object
+    to implement the __len__ and __getitem__ protocols as methods."""
     def __len__(self):
         # Return the length of the dataset
         return len(self.X.shape[0])
+    
+    def __getitem__(self, idx):
+        if self.augment:
+            return self.X[idx], self.y[idx], self.X_aug[idx],  \
+                   self.X_f[idx], self.X_aug_f[idx]
+        else:
+            return self.X[idx], self.y[idx], self.X[idx],  \
+                   self.X_f[idx], self.X_f[idx]
 
     def plot_sample(self, TxF = False, OrigxAug = False):
         # For iterating over multiple plots: plt.figure, then, plt.add_subplot
@@ -79,3 +90,9 @@ def data_generator(sourcedata_path, targetdata_path,
     train_dataset = TimeSeriesDataset(train_dataset, augment, jitter, scaling, permute)
     finetune_dataset = TimeSeriesDataset(finetune_dataset, augment, jitter, scaling, permute)
     test_dataset = TimeSeriesDataset(test_dataset, augment, jitter, scaling, permute)
+
+    train_loader = DataLoader(dataset = train_dataset, shuffle = True)
+    valid_loader = DataLoader(dataset = finetune_dataset, shuffle = True)
+    test_loader = DataLoader(dataset = test_dataset, shuffle = True)
+
+    return train_loader, valid_loader, test_loader

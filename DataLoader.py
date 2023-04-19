@@ -16,7 +16,7 @@ class TimeSeriesDataset(Dataset):
     # Initializing this class requires that the parameter 'dataset' is inserted as an already loaded torch tensor using torch.load
     def __init__(self, dataset,
                  augment = False,
-                 jitter = False, scaling = False):
+                 jitter = False, scaling = False, removal = False):
         self.X = dataset['samples']
         self.y = dataset['labels']
         self.X_aug = None
@@ -35,12 +35,14 @@ class TimeSeriesDataset(Dataset):
         if self.X.shape.index(min(self.X.shape)) != 1:
             self.X = self.X.permute(0, 2, 1)
 
-        if augment: ## Only augment data if we ask for it to be augmented
-            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling)
-                
         # Transfer data to frequency domain using torch.fft (frequency fourier transform)
         self.X_f = fft.fft(self.X).abs()
         #self.X_aug_f = fft.fft(self.X_aug)
+        
+        if augment: ## Only augment data if we ask for it to be augmented
+            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling)
+            self.X_f_aug = augment_Data_FD(self.X_f, do_removal = removal)
+                
     
     def __len__(self):
         # Return the length of the dataset

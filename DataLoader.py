@@ -42,7 +42,7 @@ class TimeSeriesDataset(Dataset):
             self.X = self.X.permute(0, 2, 1)
 
                 
-        # Transfer data to frequency domain using torch.fft (frequency fourier transform)
+        # Transfer data to frequency domain using torch.fft (fast fourier transform)
         self.X_f = fft.fft(self.X).abs()
         
         if augment: ## Only augment data if we ask for it to be augmented

@@ -8,3 +8,5 @@ torch == 1.13.0+cpu
 torchvision == 0.14.0+cpu
 
 ipykernel == 6.21.3
+
+scikit-learn==1.0.2

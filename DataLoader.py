@@ -19,7 +19,7 @@ class TimeSeriesDataset(Dataset):
     """Load and prepare a dataset for training on a neural network
     Initializing this class requires that the parameter 'dataset' is inserted as an already loaded torch tensor using torch.load.
     """
-    def __init__(self, dataset,
+    def __init__(self, dataset, config,
                  augment = False,
                  jitter = False, scaling = False, permute = False):
         self.augment = augment
@@ -41,6 +41,8 @@ class TimeSeriesDataset(Dataset):
         if self.X.shape.index(min(self.X.shape)) != 1:
             self.X = self.X.permute(0, 2, 1)
 
+        self.X = self.X[:, :1, :int(config.TSlength_aligned)]
+
                 
         # Transfer data to frequency domain using torch.fft (fast fourier transform)
         self.X_f = fft.fft(self.X).abs()
@@ -52,7 +54,7 @@ class TimeSeriesDataset(Dataset):
     to implement the __len__ and __getitem__ protocols as methods."""
     def __len__(self):
         # Return the length of the dataset
-        return len(self.X.shape[0])
+        return self.X.shape[0]
     
     def __getitem__(self, idx):
         if self.augment:
@@ -80,16 +82,16 @@ class TimeSeriesDataset(Dataset):
             plt.legend()
             plt.show()
     
-def data_generator(sourcedata_path, targetdata_path,
+def data_generator(sourcedata_path, targetdata_path, config, 
                    augment = False, jitter = False, scaling = False, permute = False):
     """Load data for pre-training, fine-tuning and for testing."""
     train_dataset = torch.load(os.path.join(sourcedata_path, "train.pt"))
     finetune_dataset = torch.load(os.path.join(targetdata_path, "train.pt"))
     test_dataset = torch.load(os.path.join(targetdata_path, "test.pt"))
 
-    train_dataset = TimeSeriesDataset(train_dataset, augment, jitter, scaling, permute)
-    finetune_dataset = TimeSeriesDataset(finetune_dataset, augment, jitter, scaling, permute)
-    test_dataset = TimeSeriesDataset(test_dataset, augment, jitter, scaling, permute)
+    train_dataset = TimeSeriesDataset(train_dataset, config, augment, jitter, scaling, permute)
+    finetune_dataset = TimeSeriesDataset(finetune_dataset, config, augment, jitter, scaling, permute)
+    test_dataset = TimeSeriesDataset(test_dataset, config, augment, jitter, scaling, permute)
 
     train_loader = DataLoader(dataset = train_dataset, shuffle = True)
     valid_loader = DataLoader(dataset = finetune_dataset, shuffle = True)

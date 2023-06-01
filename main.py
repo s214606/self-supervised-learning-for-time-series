@@ -35,7 +35,7 @@ classifier_optimizer = torch.optim.Adam(classifier.parameters(), lr = configs.lr
 
 """Train the model"""
 Trainer(TFC_model, temporal_contr_model, model_optimizer, temporal_contr_optimizer, train_loader, valid_loader, test_loader,
-        device = None, logger = None, config = configs, experiment_log_dir = os.path, training_mode = "pre_train",
+        device = 'cpu', logger = None, config = configs, experiment_log_dir = os.path, training_mode = "pre_train",
         classifier = classifier, classifier_optimizer = classifier_optimizer)
 
 print(f"Training time is: {datetime.now() - start_time}")

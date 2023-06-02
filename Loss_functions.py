@@ -74,7 +74,7 @@ class NTXentLoss_poly(torch.nn.Module):
     """Defines the Normalized Temperature Scaled Cross Entropy Loss for making sure predictions
     are mapped close to each other in the latent space"""
     def __init__(self, device, batch_size, temperature, use_cosine_similarity):
-        super(NTXentLoss, self).__init__()
+        super(NTXentLoss_poly, self).__init__()
         self.batch_size = batch_size
         self.device = device
         self.temperature = temperature
@@ -86,7 +86,7 @@ class NTXentLoss_poly(torch.nn.Module):
     def get_similarity_function(self, use_cosine_similarity):
         """Computes similarity (typically Cosine similariy), which appears in the denominator and numerator as 'sim'"""
         if use_cosine_similarity:
-            self.cosine_similarity = torch.nn.CosineSimilarity(dim = -1)
+            self.cosine = torch.nn.CosineSimilarity(dim = -1)
             return self.cosine_similarity
         else:
             return self.dot_similarity
@@ -111,7 +111,7 @@ class NTXentLoss_poly(torch.nn.Module):
         # x shape: (N, 1, C)
         # y shape: (1, 2N, C)
         # v shape: (N, 2N)
-        v = self.cosine_similarity(x.unsqueeze(1), y.unsqueeze(0))
+        v = self.cosine(x.unsqueeze(1), y.unsqueeze(0))
         return v
     
     def forward(self, zis, zjs):
@@ -124,7 +124,7 @@ class NTXentLoss_poly(torch.nn.Module):
         r_pos = torch.diag(similarity_matrix, -self.batch_size)
         positives = torch.cat([l_pos, r_pos]).view(2 * self.batch_size, 1)
 
-        negatives = similarity_matrix[self.mask_samples_from_same_repr].view(2 * self.batch_size, -1)
+        negatives = similarity_matrix[self.mask_samples_from_same_representation].view(2 * self.batch_size, -1)
 
         logits = torch.cat((positives, negatives), dim=1)
         logits /= self.temperature

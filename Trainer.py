@@ -29,6 +29,7 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
     """Pre-training for pre-training a model on labelled data, decided by the "training_mode" parameter."""
     if training_mode == "pre_train":
         for epoch in range(1, config.num_epoch + 1):
+            print(f"Started pre-training Epoch {epoch}.")
             train_loss, train_acc, train_auc = model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optimizer,
                                                               train_dl, config, device, training_mode, model_F = model_F,
                                                               model_F_optimizer = model_F_optimizer)
@@ -37,9 +38,9 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
                          f'Train Loss     : {train_loss:.4f}\t | \tTrain Accuracy     : {train_acc:2.4f}\t | \tTrain AUC : {train_auc:2.4f}\n'
                          )
         # Save the model
-        os.makedirs(os.path.join(experiment_log_dir, "Saved_models"), exist_ok=True) # only save in self_supervised mode.
+        os.makedirs(os.path.join("Saved models"), exist_ok=True) # only save in self_supervised mode.
         chkpoint = {'model_state_dict': model.state_dict(),}
-        torch.save(chkpoint, os.path.join(experiment_log_dir, "saved_models", f'ckp_last.pt'))
+        torch.save(chkpoint, os.path.join("Saved models", f'ckp_last.pt'))
         print('Pretrained model is stored at folder:{}'.format(experiment_log_dir+'saved_models'+'ckp_last.pt'))
     
     print("Training finished.")
@@ -52,8 +53,9 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
     total_acc = []
     total_auc = []
     model.train()
-
+    i = 0
     for batch_idx, (data, labels, data_aug, data_f, data_f_aug) in enumerate(train_loader):
+        i += 1
         data, labels = data.float().to(device), labels.long().to(device)
         data_aug = data_aug.float().to(device)
         data_f, data_f_aug = data_f.float().to(device), data_f_aug.float().to(device)
@@ -90,8 +92,13 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
         model_optimizer.step()
         print(f"Finished optimizing batch {batch_idx}.")
 
+        # Terminate early if a certain threshold is reached (for testing compilation)
+        terminate_threshold = 2
+        if i > terminate_threshold:
+            break
+
     # Print the results
-    print('pretraining: overall loss:{}, l_t: {}, l_f:{}, l_c:{}'.format(loss,loss_t,loss_f, loss_c))
+    print('pretraining: overall loss: {}, l_t: {}, l_f:{}, l_c:{}'.format(loss,loss_t,loss_f, loss_c))
 
     total_loss = torch.tensor(total_loss).mean()
     if training_mode == "pre_train":

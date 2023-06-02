@@ -93,8 +93,8 @@ def data_generator(sourcedata_path, targetdata_path, config,
     finetune_dataset = TimeSeriesDataset(finetune_dataset, config, augment, jitter, scaling, permute)
     test_dataset = TimeSeriesDataset(test_dataset, config, augment, jitter, scaling, permute)
 
-    train_loader = DataLoader(dataset = train_dataset, shuffle = True)
-    valid_loader = DataLoader(dataset = finetune_dataset, shuffle = True)
-    test_loader = DataLoader(dataset = test_dataset, shuffle = True)
+    train_loader = DataLoader(dataset = train_dataset, shuffle = True, batch_size=config.batch_size)
+    valid_loader = DataLoader(dataset = finetune_dataset, shuffle = True, batch_size=config.target_batch_size)
+    test_loader = DataLoader(dataset = test_dataset, shuffle = True, batch_size=config.target_batch_size)
 
     return train_loader, valid_loader, test_loader

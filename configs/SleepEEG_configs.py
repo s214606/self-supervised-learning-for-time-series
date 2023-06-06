@@ -4,7 +4,7 @@ class Config(object):
         self.increased_dim = 1
         self.final_out_channels = 128
         self.num_classes = 5
-        self.num_classes_target = 2
+        self.num_classes_target = 2 #2
         self.dropout = 0.35
 
 
@@ -18,7 +18,7 @@ class Config(object):
         self.CNNoutput_channel = 10 # 90 # 10 for Epilepsy model
 
         # training configs
-        self.num_epoch = 3
+        self.num_epoch = 2 #40
 
 
         # optimizer parameters

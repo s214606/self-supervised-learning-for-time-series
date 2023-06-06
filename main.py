@@ -34,15 +34,15 @@ temporal_contr_optimizer = None
 
 model_optimizer = torch.optim.Adam(TFC_model.parameters(), lr = source_configs.lr, betas = (source_configs.beta1, source_configs.beta2), weight_decay = 3e-4)
 classifier_optimizer = torch.optim.Adam(classifier.parameters(), lr = source_configs.lr, betas = (source_configs.beta1, source_configs.beta2), weight_decay = 3e-4)
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 """Pre-train a model"""
 Trainer(TFC_model, temporal_contr_model, model_optimizer, temporal_contr_optimizer, train_loader, valid_loader, test_loader,
-        device = 'cpu', logger = None, config = source_configs, experiment_log_dir = os.getcwd(), training_mode = "pre_train",
+        device = device, logger = None, config = source_configs, experiment_log_dir = os.getcwd(), training_mode = "pre_train",
         classifier = classifier, classifier_optimizer = classifier_optimizer)
 
 #Load pre-trained model:
 pre_trained_model_path = os.path.join("Saved models", "ckp_last.pt")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 checkpoint = torch.load(pre_trained_model_path, map_location=device)
 pre_trained_dict = checkpoint["model_state_dict"]
 #Load model into TFC classifier instance
@@ -50,7 +50,7 @@ TFC_model.load_state_dict(pre_trained_dict)
 
 """Fine-tune a model"""
 Trainer(TFC_model, temporal_contr_model, model_optimizer, temporal_contr_optimizer, train_loader, valid_loader,
-        test_loader, device = 'cpu', logger = None, config = source_configs, experiment_log_dir=os.getcwd(),
+        test_loader, device = device, logger = None, config = source_configs, experiment_log_dir=os.getcwd(),
         training_mode = "Fine_tune", classifier = classifier, classifier_optimizer = classifier_optimizer)
 
 print(f"Training time was: {datetime.now() - start_time}")

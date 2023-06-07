@@ -10,8 +10,9 @@
 
 # execute our command
 
+cd ..
 set -e
-source ../.venv/bin/activate
+source .venv/bin/activate
 #pip3 freeze
 #module load scipy/1.9.1-python-3.9.14
-python3 ../main.py
+python3 main.py

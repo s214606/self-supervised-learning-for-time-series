@@ -10,13 +10,17 @@ from Augmentation import augment_Data_FD, augment_Data_TD
 ## Commit#: Find commits with conv1D as model
 
 # Seed for reproducability
-np.random.seed(32)
+seed = 32
+np.random.seed(seed)
+torch.manual_seed(seed)
 
 class TimeSeriesDataset(Dataset):
-    # Initializing this class requires that the parameter 'dataset' is inserted as an already loaded torch tensor using torch.load
+    """Load and prepare a dataset for training on a neural network
+    Initializing this class requires that the parameter 'dataset' is inserted as an already loaded torch tensor using torch.load
+    """
     def __init__(self, dataset,
                  augment = False,
-                 jitter = False, scaling = False, rotation = False, removal = False, addition = False):
+                 jitter = False, scaling = False, permute = False, rotation = False, removal = False, addition = False):
         self.X = dataset['samples']
         self.y = dataset['labels']
         self.X_aug = None
@@ -35,6 +39,9 @@ class TimeSeriesDataset(Dataset):
         # Make sure the channel is in the second dimension
         if self.X.shape.index(min(self.X.shape)) != 1:
             self.X = self.X.permute(0, 2, 1)
+
+        if augment: ## Only augment data if we ask for it to be augmented
+            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_permute = permute)
 
         # Transfer data to frequency domain using torch.fft (frequency fourier transform)
         self.X_f = fft.fft(self.X).abs()
@@ -67,8 +74,3 @@ class TimeSeriesDataset(Dataset):
             plt.legend()
             plt.show()
             
-
-SleepEEG = TimeSeriesDataset(dataset=torch.load(os.path.join("datasets", "SleepEEG", "train.pt")), scaling = True, augment = True)
-SleepEEG.plot_sample(OrigxAug=True)
-dataset=torch.load(os.path.join("datasets", "SleepEEG", "train.pt"))
-X = dataset['samples']

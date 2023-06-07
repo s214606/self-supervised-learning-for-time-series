@@ -3,13 +3,12 @@ import numpy as np
 from transforms3d.axangles import axangle2mat
 
 def augment_Data_TD(data, do_jitter = False, do_scaling = False, do_permute = False, do_rotation = False):
-
     if do_jitter and do_scaling:
-        aug = jitter(scaling(data))
+        aug = jitter(scaling(data, configs), configs)
     elif do_jitter:
-        aug = jitter(data)
+        aug = jitter(data, configs)
     elif do_scaling:
-        aug = scaling(data)
+        aug = scaling(data, configs)
     elif do_permute:
         aug = permute(data)
     elif do_rotation:
@@ -37,21 +36,41 @@ def add_frequencies(data, aug_ratio=0):
     randomized_amps = torch.rand(data.shape)*(max_amp*0.01)
     return data + (frequencies_to_add*randomized_amps)
 
-def jitter(data, sigma = 5):
+def jitter(data, configs, sigma = 5):
     # Add noise to every observation within every sample, by sampling from a normal distribution with the same shape as the data
-    noise = np.random.normal(loc = 0, scale = sigma, size = data.shape)
+    noise = np.random.normal(loc = 0, scale = configs.augmentation.jitter_ratio, size = data.shape)
     return data + noise
 
-def scaling(data, sigma = 0.5):
+def scaling(data, configs, sigma = 0.5):
     # Add the same noise to every observation 
-    scalingFactor = np.random.normal(loc = 1.0, scale = sigma, size = (data.shape[0], data.shape[2]))
+    scalingFactor = np.random.normal(loc = 1.0, scale = configs.augmentation.jitter_scale_ratio, size = (data.shape[0], data.shape[2]))
     return np.multiply(data, scalingFactor[:, np.newaxis, :])
+
+def permute(x, configs, max_segments=5, seg_mode="random"):
+    orig_steps = np.arange(x.shape[2])
+
+    num_segs = np.random.randint(1, configs.augmentation.max_seq, size=(x.shape[0]))
+
+    ret = np.zeros_like(x)
+    for i, pat in enumerate(x):
+        if num_segs[i] > 1:
+            if seg_mode == "random":
+                split_points = np.random.choice(x.shape[2] - 2, num_segs[i] - 1, replace=False)
+                split_points.sort()
+                splits = np.split(orig_steps, split_points)
+            else:
+                splits = np.array_split(orig_steps, num_segs[i])
+            warp = np.concatenate(np.random.permutation(splits)).ravel()
+            ret[i] = pat[0,warp]
+        else:
+            ret[i] = pat
+    return torch.from_numpy(ret)
 
 def rotation(data):
     axis = np.random.uniform(low=-1, high=1, size=data.shape[1])
     angle = np.random.uniform(low=-np.pi, high=np.pi)
     return np.matmul(data , axangle2mat(axis,angle))
-  
+
 """def permute(data, NSeg = 5):
     import time
     start = time.time()

@@ -135,6 +135,8 @@ Article data npy
 
 ## Ignore virtual environment (name of venv + /)
 ProjWorkEnv/
+SubProj/
 
 ## Ignore saved models
 Saved models/
+Loss values/

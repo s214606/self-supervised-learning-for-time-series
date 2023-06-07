@@ -49,9 +49,9 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
         total_loss_c_pre = torch.tensor(total_loss_c_pre)
         total_loss_f_pre = torch.tensor(total_loss_f_pre)
         total_loss_t_pre = torch.tensor(total_loss_t_pre)
-        torch.save(total_loss_c_pre, os.path.join("Loss values", "total_loss_c_pre"))
-        torch.save(total_loss_f_pre, os.path.join("Loss values", "total_loss_f_pre"))
-        torch.save(total_loss_t_pre, os.path.join("Loss values", "total_loss_t_pre"))
+        torch.save(total_loss_c_pre, os.path.join("Loss values", "total_loss_c_pre.pt"))
+        torch.save(total_loss_f_pre, os.path.join("Loss values", "total_loss_f_pre.pt"))
+        torch.save(total_loss_t_pre, os.path.join("Loss values", "total_loss_t_pre.pt"))
 
     """Fine-tuning and test"""
     if training_mode != "pre_train":
@@ -79,9 +79,11 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
         total_loss_c_fine = torch.tensor(total_loss_c_fine)
         total_loss_f_fine = torch.tensor(total_loss_f_fine)
         total_loss_t_fine = torch.tensor(total_loss_t_fine)
-        torch.save(total_loss_c_fine, os.path.join("Loss values", "total_loss_c_fine"))
-        torch.save(total_loss_f_fine, os.path.join("Loss values", "total_loss_f_fine"))
-        torch.save(total_loss_t_fine, os.path.join("Loss values", "total_loss_t_fine"))
+        best_performance = torch.tensor(best_performance)
+        torch.save(best_performance, os.path.join("Loss values", "best_performance.pt"))
+        torch.save(total_loss_c_fine, os.path.join("Loss values", "total_loss_c_fine.pt"))
+        torch.save(total_loss_f_fine, os.path.join("Loss values", "total_loss_f_fine.pt"))
+        torch.save(total_loss_t_fine, os.path.join("Loss values", "total_loss_t_fine.pt"))
         """
         # train classifier: KNN
         neigh = KNeighborsClassifier(n_neighbors=1)
@@ -162,7 +164,7 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
         print(f"Finished optimizing batch {batch_idx}.")
 
         # Terminate early if a certain threshold is reached (for testing compilation)
-        terminate_threshold = 2
+        terminate_threshold = 999999
         if i > terminate_threshold:
             break
 
@@ -250,7 +252,7 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
             outs = np.append(outs, pred.cpu().numpy())
             trgs = np.append(trgs, labels.data.cpu().numpy())
         
-        terminate_threshold = 2
+        terminate_threshold = 999999
         if i > terminate_threshold:
             break
         print(f"Finished optimizing batch {batch_idx}.")

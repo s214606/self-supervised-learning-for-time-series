@@ -23,7 +23,7 @@ configs = SleepEEG_Config()
 sourcedata_path = os.path.join("datasets", source_dataset)
 targetdata_path = os.path.join("datasets", target_dataset)
 train_loader, valid_loader, test_loader = data_generator(sourcedata_path=sourcedata_path, targetdata_path=targetdata_path,
-                                                         config = configs, augment=False)
+                                                         config = configs, augment=True, jitter=True, scaling=True)
 
 TFC_model = TFC_Classifer(configs = configs)
 classifier = target_classifier(configs).to(device = None)
@@ -31,12 +31,12 @@ classifier = target_classifier(configs).to(device = None)
 temporal_contr_model = None
 temporal_contr_optimizer = None
 
-model_optimizer = torch.optim.Adam(TFC_model.parameters(), lr = source_configs.lr, betas = (source_configs.beta1, source_configs.beta2), weight_decay = 3e-4)
-classifier_optimizer = torch.optim.Adam(classifier.parameters(), lr = source_configs.lr, betas = (source_configs.beta1, source_configs.beta2), weight_decay = 3e-4)
+model_optimizer = torch.optim.Adam(TFC_model.parameters(), lr = configs.lr, betas = (configs.beta1, configs.beta2), weight_decay = 3e-4)
+classifier_optimizer = torch.optim.Adam(classifier.parameters(), lr = configs.lr, betas = (configs.beta1, configs.beta2), weight_decay = 3e-4)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 """Pre-train a model"""
 Trainer(TFC_model, temporal_contr_model, model_optimizer, temporal_contr_optimizer, train_loader, valid_loader, test_loader,
-        device = device, logger = None, config = source_configs, experiment_log_dir = os.getcwd(), training_mode = "pre_train",
+        device = device, logger = None, config = configs, experiment_log_dir = os.getcwd(), training_mode = "pre_train",
         classifier = classifier, classifier_optimizer = classifier_optimizer)
 
 #Load pre-trained model:
@@ -49,7 +49,7 @@ TFC_model.load_state_dict(pre_trained_dict)
 
 """Fine-tune a model"""
 Trainer(TFC_model, temporal_contr_model, model_optimizer, temporal_contr_optimizer, train_loader, valid_loader,
-        test_loader, device = device, logger = None, config = source_configs, experiment_log_dir=os.getcwd(),
+        test_loader, device = device, logger = None, config = configs, experiment_log_dir=os.getcwd(),
         training_mode = "Fine_tune", classifier = classifier, classifier_optimizer = classifier_optimizer)
 
 print(f"Training time was: {datetime.now() - start_time}")

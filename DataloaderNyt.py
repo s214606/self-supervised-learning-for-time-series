@@ -1,7 +1,9 @@
 ## Import libraries
 import torch, os
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
 
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
@@ -16,7 +18,36 @@ class TimeSeriesDataset(Dataset):
         
         self.datapath = os.path.join(self.basepath,self.sensorDevice,self.sensor) #where the data is
         self.filenames = os.listdir(path=self.datapath)
-        print(os.path.join(self.datapath,self.filenames[1]))
+        self.NSamples = len(self.filenames)
+        
+        
+        df = pd.read_csv(os.path.join(self.datapath,self.filenames[1]),
+                         header=None, names=["id","label","time","x","y","z"])
+        df['z'] = df['z'].str.replace(r';', '')
+        
+        Y = np.array(df["label"])
+
+        # first apply label encoding
+        labelEncoder = LabelEncoder()
+        YEncoded = labelEncoder.fit_transform(Y)
+        
+        X = df[['time','x', 'y', 'z']].to_numpy()
+        
+        result = np.empty((self.NSamples,len(X),4))
+        
+        print(result.shape)
+        print(result[0,:,:])
+        result[0,:,:] = X
+        print(result[0,:,:])
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
 if __name__ == '__main__':

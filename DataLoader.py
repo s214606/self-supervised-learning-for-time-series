@@ -26,6 +26,7 @@ class TimeSeriesDataset(Dataset):
         self.y = dataset['labels']
         self.X_aug = None
         self.y_aug = None
+        self.augment = augment
 
         # Shuffle data
         data = list(zip(self.X, self.y))
@@ -47,11 +48,11 @@ class TimeSeriesDataset(Dataset):
         # Transfer data to frequency domain using torch.fft (fast fourier transform)
         self.X_f = fft.fft(self.X).abs()
         
+        if augment: ## Only augment data if we ask for it to be augmented
+            self.X_aug = augment_Data_TD(self.X, config, do_jitter = jitter, do_scaling = scaling, do_rotation = rotation)
+            self.X_f_aug = augment_Data_FD(self.X_f, do_removal = removal, do_addition = addition)
     """In order to utilize the functionality of torch.utils.data.Dataloader, it is necessary for the dataloader object
     to implement the __len__ and __getitem__ protocols as methods."""
-        if augment: ## Only augment data if we ask for it to be augmented
-            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_rotation = rotation)
-            self.X_f_aug = augment_Data_FD(self.X_f, do_removal = removal, do_addition = addition)
             
     def __len__(self):
         # Return the length of the dataset
@@ -60,7 +61,7 @@ class TimeSeriesDataset(Dataset):
     def __getitem__(self, idx):
         if self.augment:
             return self.X[idx], self.y[idx], self.X_aug[idx],  \
-                   self.X_f[idx], self.X_aug_f[idx]
+                   self.X_f[idx], self.X_f_aug[idx]
         else:
             return self.X[idx], self.y[idx], self.X[idx],  \
                    self.X_f[idx], self.X_f[idx]
@@ -84,15 +85,16 @@ class TimeSeriesDataset(Dataset):
             plt.show()
     
 def data_generator(sourcedata_path, targetdata_path, config, 
-                   augment = False, jitter = False, scaling = False, permute = False):
+                   augment = False, jitter = False, scaling = False, permute = False, rotation = False,
+                   removal = False, addition = False):
     """Load data for pre-training, fine-tuning and for testing."""
     train_dataset = torch.load(os.path.join(sourcedata_path, "train.pt"))
     finetune_dataset = torch.load(os.path.join(targetdata_path, "train.pt"))
     test_dataset = torch.load(os.path.join(targetdata_path, "test.pt"))
 
-    train_dataset = TimeSeriesDataset(train_dataset, config, augment, jitter, scaling, permute)
-    finetune_dataset = TimeSeriesDataset(finetune_dataset, config, augment, jitter, scaling, permute)
-    test_dataset = TimeSeriesDataset(test_dataset, config, augment, jitter, scaling, permute)
+    train_dataset = TimeSeriesDataset(train_dataset, config, augment, jitter, scaling, permute, rotation, removal, addition)
+    finetune_dataset = TimeSeriesDataset(finetune_dataset, config, augment, jitter, scaling, permute, rotation, removal, addition)
+    test_dataset = TimeSeriesDataset(test_dataset, config, augment, jitter, scaling, permute, rotation, removal, addition)
 
     train_loader = DataLoader(dataset = train_dataset, shuffle = True, batch_size=config.batch_size, drop_last = config.drop_last)
     valid_loader = DataLoader(dataset = finetune_dataset, shuffle = True, batch_size=config.target_batch_size, drop_last = config.drop_last)

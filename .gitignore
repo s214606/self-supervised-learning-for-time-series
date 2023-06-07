@@ -134,9 +134,13 @@ Article data npy
 *.pt
 
 ## Ignore virtual environment (name of venv + /)
-ProjWorkEnv/
+ProjWorkEnv
 SubProj/
 
 ## Ignore saved models
 Saved models/
 Loss values/
+
+# Other
+test.ipynb
+X_sample.npy

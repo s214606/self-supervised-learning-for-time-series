@@ -1,13 +1,16 @@
 import torch
 import numpy as np
+from transforms3d.axangles import axangle2mat
 
-def augment_Data_TD(data, do_jitter = False, do_scaling = False):
+def augment_Data_TD(data, do_jitter = False, do_scaling = False, do_rotation = False):
     if do_jitter and do_scaling:
         aug = jitter(scaling(data))
     elif do_jitter:
         aug = jitter(data)
     elif do_scaling:
         aug = scaling(data)
+    elif do_rotation:
+        aug = rotation(data)
     else:
         return None
     return aug
@@ -40,3 +43,7 @@ def scaling(data, sigma = 0.1):
     scalingFactor = np.random.normal(loc = 1.0, scale = sigma, size = (data.shape[0], data.shape[2]))
     return np.multiply(data, scalingFactor[:, np.newaxis, :])
 
+def rotation(data):
+    axis = np.random.uniform(low=-1, high=1, size=data.shape[1])
+    angle = np.random.uniform(low=-np.pi, high=np.pi)
+    return np.matmul(data , axangle2mat(axis,angle))

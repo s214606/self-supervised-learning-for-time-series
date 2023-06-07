@@ -51,7 +51,7 @@ class TimeSeriesDataset(Dataset):
         """In order to utilize the functionality of torch.utils.data.Dataloader, it is necessary for the dataloader object
         to implement the __len__ and __getitem__ protocols as methods."""
         if augment: ## Only augment data if we ask for it to be augmented
-            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_rotation = rotation)
+            self.X_aug = augment_Data_TD(self.X, config, do_jitter = jitter, do_scaling = scaling, do_rotation = rotation)
             self.X_f_aug = augment_Data_FD(self.X_f, do_removal = removal, do_addition = addition)
             
     def __len__(self):

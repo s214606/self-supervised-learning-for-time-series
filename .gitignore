@@ -135,3 +135,9 @@ Article data npy
 
 ## Ignore virtual environment (name of venv + /)
 ProjWorkEnv/
+
+
+
+# Other
+test.ipynb
+X_sample.npy

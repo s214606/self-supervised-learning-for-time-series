@@ -20,7 +20,7 @@ class TimeSeriesDataset(Dataset):
     """
     def __init__(self, dataset,
                  augment = False,
-                 jitter = False, scaling = False, permute = False):
+                 jitter = False, scaling = False, permute = False, rotation = False, removal = False, addition = False):
         self.X = dataset['samples']
         self.y = dataset['labels']
         self.X_aug = None
@@ -28,6 +28,7 @@ class TimeSeriesDataset(Dataset):
 
         # Shuffle data
         data = list(zip(self.X, self.y))
+        np.random.seed(32) # BE AWARE ABOUT THIS DETAIL
         np.random.shuffle(data)
         self.X, self.y = zip(*data)
         self.X, self.y = torch.stack(list(self.X), dim=0), torch.stack(list(self.y), dim=0)
@@ -41,10 +42,15 @@ class TimeSeriesDataset(Dataset):
 
         if augment: ## Only augment data if we ask for it to be augmented
             self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_permute = permute)
-                
+
         # Transfer data to frequency domain using torch.fft (frequency fourier transform)
         self.X_f = fft.fft(self.X).abs()
         #self.X_aug_f = fft.fft(self.X_aug)
+        
+        if augment: ## Only augment data if we ask for it to be augmented
+            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_rotation = rotation)
+            self.X_f_aug = augment_Data_FD(self.X_f, do_removal = removal, do_addition = addition)
+                
     
     def __len__(self):
         # Return the length of the dataset

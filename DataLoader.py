@@ -48,7 +48,7 @@ class TimeSeriesDataset(Dataset):
         self.X_f = fft.fft(self.X).abs()
         
         if augment: ## Only augment data if we ask for it to be augmented
-            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_permute = permute)
+            self.X_aug = augment_Data_TD(self.X, do_jitter = jitter, do_scaling = scaling, do_permute = permute, configs = config)
             self.X_aug_f = self.X_f
     """In order to utilize the functionality of torch.utils.data.Dataloader, it is necessary for the dataloader object
     to implement the __len__ and __getitem__ protocols as methods."""

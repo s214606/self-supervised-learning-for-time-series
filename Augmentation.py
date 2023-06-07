@@ -1,13 +1,13 @@
 import torch
 import numpy as np
 
-def augment_Data_TD(data, do_jitter = False, do_scaling = False, do_permute = False):
+def augment_Data_TD(data, configs, do_jitter = False, do_scaling = False, do_permute = False):
     if do_jitter and do_scaling:
-        aug = jitter(scaling(data))
+        aug = jitter(scaling(data, configs), configs)
     elif do_jitter:
-        aug = jitter(data)
+        aug = jitter(data, configs)
     elif do_scaling:
-        aug = scaling(data)
+        aug = scaling(data, configs)
     elif do_permute:
         aug = permute(data)
     
@@ -16,20 +16,20 @@ def augment_Data_TD(data, do_jitter = False, do_scaling = False, do_permute = Fa
 def augment_Data_FD():
     raise(NotImplementedError)
 
-def jitter(data, sigma = 5):
+def jitter(data, configs, sigma = 5):
     # Add noise to every observation within every sample, by sampling from a normal distribution with the same shape as the data
-    noise = np.random.normal(loc = 0, scale = sigma, size = data.shape)
+    noise = np.random.normal(loc = 0, scale = configs.augmentation.jitter_ratio, size = data.shape)
     return data + noise
 
-def scaling(data, sigma = 0.5):
+def scaling(data, configs, sigma = 0.5):
     # Add the same noise to every observation 
-    scalingFactor = np.random.normal(loc = 1.0, scale = sigma, size = (data.shape[0], data.shape[2]))
+    scalingFactor = np.random.normal(loc = 1.0, scale = configs.augmentation.jitter_scale_ratio, size = (data.shape[0], data.shape[2]))
     return np.multiply(data, scalingFactor[:, np.newaxis, :])
 
-def permute(x, max_segments=5, seg_mode="random"):
+def permute(x, configs, max_segments=5, seg_mode="random"):
     orig_steps = np.arange(x.shape[2])
 
-    num_segs = np.random.randint(1, max_segments, size=(x.shape[0]))
+    num_segs = np.random.randint(1, configs.augmentation.max_seq, size=(x.shape[0]))
 
     ret = np.zeros_like(x)
     for i, pat in enumerate(x):

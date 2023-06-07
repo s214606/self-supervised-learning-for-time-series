@@ -25,12 +25,13 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
     print("Training started!")
     criterion = nn.CrossEntropyLoss
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(model_optimizer, "min")
+    os.makedirs(os.path.join("Loss values"), exist_ok=True)
 
     """Pre-training for pre-training a model on labelled data, decided by the "training_mode" parameter."""
     if training_mode == "pre_train":
         for epoch in range(1, config.num_epoch + 1):
             print(f"Started pre-training Epoch {epoch}.")
-            train_loss, train_acc, train_auc = model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optimizer,
+            train_loss, train_acc, train_auc, total_loss_c_pre, total_loss_f_pre, total_loss_t_pre = model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optimizer,
                                                               train_dl, config, device, training_mode, model_F = model_F,
                                                               model_F_optimizer = model_F_optimizer)
             
@@ -43,7 +44,14 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
         torch.save(chkpoint, os.path.join("Saved models", f'ckp_last.pt'))
         print('Pretrained model is stored at folder:{}'.format(experiment_log_dir+'saved_models'+'ckp_last.pt'))
     
-    print("Training finished.")
+        print("Training finished.")
+        #Save loss values
+        total_loss_c_pre = torch.tensor(total_loss_c_pre)
+        total_loss_f_pre = torch.tensor(total_loss_f_pre)
+        total_loss_t_pre = torch.tensor(total_loss_t_pre)
+        torch.save(total_loss_c_pre, os.path.join("Loss values", "total_loss_c_pre"))
+        torch.save(total_loss_f_pre, os.path.join("Loss values", "total_loss_f_pre"))
+        torch.save(total_loss_t_pre, os.path.join("Loss values", "total_loss_t_pre"))
 
     """Fine-tuning and test"""
     if training_mode != "pre_train":
@@ -51,7 +59,7 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
         performance_list = []
         total_f1 = []
         for epoch in range(1, config.num_epoch + 1):
-            valid_loss, valid_acc, valid_auc, valid_prc, emb_finetune, label_finetune, F1 = model_finetune(model, temporal_contr_model,
+            valid_loss, valid_acc, valid_auc, valid_prc, emb_finetune, label_finetune, F1, total_loss_c_fine, total_loss_f_fine, total_loss_t_fine = model_finetune(model, temporal_contr_model,
                                                             valid_dl, config, device, training_mode, model_optimizer,
                                                             model_F = model_F, model_F_optimizer = model_F_optimizer,
                                                             classifier = classifier, classifier_optimizer = classifier_optimizer)
@@ -67,6 +75,13 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
         best_performance = performance_array[np.argmax(performance_array[:,0], axis=0)]
         print('Best Testing: Acc=%.4f| Precision = %.4f | Recall = %.4f | F1 = %.4f | AUROC= %.4f | PRC=%.4f'
             % (best_performance[0], best_performance[1], best_performance[2], best_performance[3], best_performance[4], best_performance[5]))
+        # Save loss values
+        total_loss_c_fine = torch.tensor(total_loss_c_fine)
+        total_loss_f_fine = torch.tensor(total_loss_f_fine)
+        total_loss_t_fine = torch.tensor(total_loss_t_fine)
+        torch.save(total_loss_c_fine, os.path.join("Loss values", "total_loss_c_fine"))
+        torch.save(total_loss_f_fine, os.path.join("Loss values", "total_loss_f_fine"))
+        torch.save(total_loss_t_fine, os.path.join("Loss values", "total_loss_t_fine"))
         """
         # train classifier: KNN
         neigh = KNeighborsClassifier(n_neighbors=1)
@@ -98,6 +113,9 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
     total_acc = []
     total_auc = []
     model.train()
+    total_loss_t = []
+    total_loss_f = []
+    total_loss_c = []
 
     # Compute pre-train loss using using NTXentLoss from loss_functions.py
     nt_xent_criterion = NTXentLoss_poly(device, config.batch_size, config.Context_Cont.temperature,
@@ -120,6 +138,9 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
         # Compute the losses for time and frequency domain
         loss_t = nt_xent_criterion(h_t, h_t_aug)
         loss_f = nt_xent_criterion(h_f, h_f_aug)
+        total_loss_t.append(loss_t)
+        total_loss_f.append(loss_f)
+        
 
         # Compute the loss for the time-frequency space
         loss_TF = nt_xent_criterion(z_t, z_f)
@@ -128,6 +149,8 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
         # Compute the consistency loss from the losses of the pairs of augmentations and originals
         # This is done using equation 3 from the paper, with delta as a parameter.
         loss_c = (loss_TF - loss_TF1 + delta) + (loss_TF - loss_TF2 + delta) + (loss_TF - loss_TF3 + delta)
+        total_loss_c.append(loss_c)
+
 
         # Compute the total loss
         lam = 0.2
@@ -153,9 +176,9 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
     else:
         total_acc = torch.tensor(total_acc).mean()
         total_auc = torch.tensor(total_auc).mean()
-    return total_loss, total_acc, total_auc
+    return total_loss, total_acc, total_auc, total_loss_c,total_loss_f, total_loss_t
 
-def model_finetune(model, temporal_contr_model, val_dl, config, device, training_mode, model_optimizer,
+def model_finetune(model, temporal_contr_model, val_dl, config, device, training_mode, model_optimizer, 
                    model_F = None, model_F_optimizer = None, classifier = None, classifier_optimizer = None):
     model.train()
     classifier.train()
@@ -164,6 +187,10 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
     total_acc = []
     total_auc = []  # it should be outside of the loop
     total_prc = []
+    total_loss_c = []
+    total_loss_f = []
+    total_loss_t = []
+
 
     criterion = nn.CrossEntropyLoss()
     outs = np.array([])
@@ -185,11 +212,14 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
                                             config.Context_Cont.use_cosine_similarity)
         loss_t = nt_xent_criterion(h_t, h_t_aug)
         loss_f = nt_xent_criterion(h_f, h_f_aug)
+        total_loss_t.append(loss_t)
+        total_loss_f.append(loss_f)
 
         l_TF = nt_xent_criterion(z_t, z_f)
         l_1, l_2, l_3 = nt_xent_criterion(z_t, z_f_aug), nt_xent_criterion(z_t_aug, z_f), nt_xent_criterion(z_t_aug,
                                                                                                             z_f_aug)
         loss_c = (1 + l_TF - l_1) + (1 + l_TF - l_2) + (1 + l_TF - l_3) #
+        total_loss_c.append(loss_c)
 
 
         """Add supervised classifier: 1) it's unique to finetuning. 2) this classifier will also be used in test"""
@@ -239,7 +269,7 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
     total_auc = torch.tensor(total_auc).mean()  # average acc
     total_prc = torch.tensor(total_prc).mean()
 
-    return total_loss, total_acc, total_auc, total_prc, fea_concat_flat, trgs, F1
+    return total_loss, total_acc, total_auc, total_prc, fea_concat_flat, trgs, F1, total_loss_c, total_loss_f, total_loss_t
 
 def model_test(model, test_data, config, device, training_mode,
                classifier = None):

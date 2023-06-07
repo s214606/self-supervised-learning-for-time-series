@@ -7,7 +7,7 @@ class Config(object):
         self.final_out_channels = 32  #128
 
         self.num_classes = 2
-        self.num_classes_target = 2
+        self.num_classes_target = 3
         self.dropout = 0.35
         self.features_len = 24
         self.features_len_f = 24 # 13 #self.features_len   # the output results in time domain

@@ -221,7 +221,6 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
         loss_c = (1 + l_TF - l_1) + (1 + l_TF - l_2) + (1 + l_TF - l_3) #
         total_loss_c.append(loss_c)
 
-
         """Add supervised classifier: 1) it's unique to finetuning. 2) this classifier will also be used in test"""
         fea_concat = torch.cat((z_t, z_f), dim=1)
         predictions = classifier(fea_concat) # how to define classifier? MLP? CNN?

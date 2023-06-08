@@ -9,36 +9,73 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
 
+
 #load dataset
 class TimeSeriesDataset(Dataset):
     def __init__(self, sensorDevice:str, sensor:str):
+        # #Local config
+        # self.seed = 0
+        # np.random.seed(self.seed)
+        
         self.sensorDevice = sensorDevice #is phone or watch
         self.sensor = sensor #is accel or gyro
         self.basepath = "datasets\\wisdm-dataset\\raw"
         
         self.datapath = os.path.join(self.basepath,self.sensorDevice,self.sensor) #where the data is
         self.filenames = os.listdir(path=self.datapath)
+        #Remove .DS_Store from list if its there
+        if '.DS_Store' in self.filenames:
+            self.filenames.remove('.DS_Store')
+        
         self.NSamples = len(self.filenames)
         
+        labelEncoder = LabelEncoder()
         
-        df = pd.read_csv(os.path.join(self.datapath,self.filenames[1]),
+        Xdata = np.empty((self.NSamples,60771,4))
+        Ydata = np.empty((self.NSamples,60771))
+        
+        for i in range(self.NSamples):
+            path = os.path.join(self.datapath,self.filenames[i])
+            print(path)
+            df = pd.read_csv(path,
                          header=None, names=["id","label","time","x","y","z"])
-        df['z'] = df['z'].str.replace(r';', '')
+            df['z'] = df['z'].str.replace(r';', '')
+            
+            Y = np.array(df["label"])
+            
+            YEncoded = labelEncoder.fit_transform(Y)
+            X = df[['time','x', 'y', 'z']].to_numpy()
+            
+            
+            # Sample 60000 time steps from the X data and YEncoded data, where the time steps
+            # Are sampled evenly spread out over the time series
+            X = np.array([X[i] for i in np.linspace(0,len(X)-1,60771).astype(int)])
+            YEncoded = np.array([YEncoded[i] for i in np.linspace(0,len(YEncoded)-1,60771).astype(int)])
         
-        Y = np.array(df["label"])
+            Xdata[i,:,:] = X
+            Ydata[i,:] = YEncoded
+ 
+        #Show me how the final Xdata looks like
+        print(Xdata.shape)
+        print(Xdata[np.random.randint(0,self.NSamples),:,:])
+        print(Ydata.shape)
+        print(Ydata[np.random.randint(0,self.NSamples),:])
+        
+        
+        
 
         # first apply label encoding
-        labelEncoder = LabelEncoder()
-        YEncoded = labelEncoder.fit_transform(Y)
         
-        X = df[['time','x', 'y', 'z']].to_numpy()
         
-        result = np.empty((self.NSamples,len(X),4))
         
-        print(result.shape)
-        print(result[0,:,:])
-        result[0,:,:] = X
-        print(result[0,:,:])
+        
+        
+        # result = np.empty((self.NSamples,len(X),4))
+        
+        # print(result.shape)
+        # print(result[0,:,:])
+        # result[0,:,:] = X
+        # print(result[0,:,:])
         
         
         

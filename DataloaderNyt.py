@@ -7,12 +7,16 @@ from sklearn.preprocessing import LabelEncoder
 
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+import torch.fft as fft
+from Augmentation import augment_Data_FD, augment_Data_TD
+
 
 
 
 #load dataset
 class TimeSeriesDataset(Dataset):
-    def __init__(self, sensorDevice:str, sensor:str):
+    def __init__(self, sensorDevice:str, sensor:str, config, augment = False, jitter = False, 
+                 scaling = False, rotation = False, removal = False, addition = False):
         # #Local config
         # self.seed = 0
         # np.random.seed(self.seed)
@@ -31,8 +35,11 @@ class TimeSeriesDataset(Dataset):
         
         labelEncoder = LabelEncoder()
         
-        Xdata = np.empty((self.NSamples,60771,4))
-        Ydata = np.empty((self.NSamples,60771))
+        self.X = np.empty((self.NSamples,60771,4))
+        self.Y = np.empty((self.NSamples,60771))
+        self.X_aug = None
+        self.X_f_aug = None
+        self.y_aug = None
         
         for i in range(self.NSamples):
             path = os.path.join(self.datapath,self.filenames[i])
@@ -41,25 +48,44 @@ class TimeSeriesDataset(Dataset):
                          header=None, names=["id","label","time","x","y","z"])
             df['z'] = df['z'].str.replace(r';', '')
             
-            Y = np.array(df["label"])
+            YSample = np.array(df["label"])
             
-            YEncoded = labelEncoder.fit_transform(Y)
-            X = df[['time','x', 'y', 'z']].to_numpy()
+            YEncoded = labelEncoder.fit_transform(YSample)
+            XSample = df[['time','x', 'y', 'z']].to_numpy()
             
             
             # Sample 60000 time steps from the X data and YEncoded data, where the time steps
             # Are sampled evenly spread out over the time series
-            X = np.array([X[i] for i in np.linspace(0,len(X)-1,60771).astype(int)])
-            YEncoded = np.array([YEncoded[i] for i in np.linspace(0,len(YEncoded)-1,60771).astype(int)])
+            XResampled = np.array([XSample[i] for i in np.linspace(0,len(XSample)-1,60771).astype(int)])
+            YResampledEncoded = np.array([YEncoded[i] for i in np.linspace(0,len(YEncoded)-1,60771).astype(int)])
         
-            Xdata[i,:,:] = X
-            Ydata[i,:] = YEncoded
- 
-        #Show me how the final Xdata looks like
-        print(Xdata.shape)
-        print(Xdata[np.random.randint(0,self.NSamples),:,:])
-        print(Ydata.shape)
-        print(Ydata[np.random.randint(0,self.NSamples),:])
+            self.X[i,:,:] = XResampled
+            self.Y[i,:] = YResampledEncoded
+
+        #X and Y numpy arrays are converted to tensors
+        self.X = torch.from_numpy(self.X).float()
+        self.Y = torch.from_numpy(self.Y).long()
+        
+        self.X_f = fft.fft(self.X).abs()
+        
+        if augment: ## Only augment data if we ask for it to be augmented
+            self.X_aug = augment_Data_TD(self.X, config, do_jitter = jitter, do_scaling = scaling, do_rotation = rotation)
+            self.X_f_aug = augment_Data_FD(self.X_f, do_removal = removal, do_addition = addition)
+        
+        
+        
+        def __len__(self):
+            return self.NSamples
+        
+        
+        def __getitem__(self, idx):
+            if self.augment:
+                return self.X[idx, :, :], self.y[idx, :, :], self.X_aug[idx, :, :],  \
+                    self.X_f[idx, :, :], self.X_f_aug[idx, :, :]
+            else:
+                return self.X[idx, :, :], self.y[idx, :, :], self.X[idx, :, :],  \
+                    self.X_f[idx, :, :], self.X_f[idx, :, :]
+        
         
         
         

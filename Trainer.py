@@ -198,7 +198,7 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
     outs = np.array([])
     trgs = np.array([])
     i = 0
-    for batch_idx, (data, labels, aug1, data_f, aug1_f) in enumerate(val_dl):
+    for data, labels, aug1, data_f, aug1_f in val_dl:
         i += 1
         # print('Fine-tuning: {} of target samples'.format(labels.shape[0]))
         data, labels = data.float().to(device), labels.long().to(device)
@@ -225,7 +225,7 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
 
         """Add supervised classifier: 1) it's unique to finetuning. 2) this classifier will also be used in test"""
         fea_concat = torch.cat((z_t, z_f), dim=1)
-        predictions = classifier(fea_concat) # how to define classifier? MLP? CNN?
+        predictions = classifier(fea_concat)
         fea_concat_flat = fea_concat.reshape(fea_concat.shape[0], -1)
         loss_p = criterion(predictions, labels) # predictor loss, actually, here is training loss
 
@@ -252,10 +252,10 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
             outs = np.append(outs, pred.cpu().numpy())
             trgs = np.append(trgs, labels.data.cpu().numpy())
         
+        print(f"Finished optimizing batch {i}.")
         terminate_threshold = 999999
         if i > terminate_threshold:
             break
-        print(f"Finished optimizing batch {batch_idx}.")
 
 
     labels_numpy = labels.detach().cpu().numpy()

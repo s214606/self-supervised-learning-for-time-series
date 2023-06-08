@@ -5,8 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 import torch.fft as fft
 from Augmentation import augment_Data_FD, augment_Data_TD
 
@@ -14,8 +13,8 @@ from Augmentation import augment_Data_FD, augment_Data_TD
 
 
 #load dataset
-class TimeSeriesDataset(Dataset):
-    def __init__(self, sensorDevice:str, sensor:str, config, augment = False, jitter = False, 
+class WISDMDataset(Dataset):
+    def __init__(self, sensorDevice:str, sensor:str, config = None, augment = False, jitter = False, 
                  scaling = False, rotation = False, removal = False, addition = False):
         # #Local config
         # self.seed = 0
@@ -86,6 +85,12 @@ class TimeSeriesDataset(Dataset):
                 return self.X[idx, :, :], self.y[idx, :, :], self.X[idx, :, :],  \
                     self.X_f[idx, :, :], self.X_f[idx, :, :]
         
+def data_generator(sourcedata_path, targetdata_path, config = None, 
+                   augment = False, jitter = False, scaling = False, permute = False):
+    #Load data
+    data = WISDMDataset(sensorDevice="phone",sensor="accel", config = config, augment = augment, jitter = jitter)
+    train, test = random_split(data, [int(0.8*len(data)), int(0.2*len(data))])
+    
         
         
         

@@ -3,7 +3,7 @@ import numpy as np
 from transforms3d.axangles import axangle2mat
 from scipy.spatial.distance import cdist
 
-def augment_Data_TD(data, do_jitter = False, do_scaling = False, do_permute = False, do_rotation = False, do_mag_warp = False):
+def augment_Data_TD(data, configs, do_jitter = False, do_scaling = False, do_permute = False, do_rotation = False, do_mag_warp = False):
     if do_jitter and do_scaling:
         aug = jitter(scaling(data, configs), configs)
     elif do_jitter:
@@ -17,7 +17,7 @@ def augment_Data_TD(data, do_jitter = False, do_scaling = False, do_permute = Fa
     elif do_mag_warp:
         aug = mag_warp(data)
     else:
-        return None
+        return data
     return aug
 
 def augment_Data_FD(data, do_removal = False, do_addition = False):
@@ -26,7 +26,7 @@ def augment_Data_FD(data, do_removal = False, do_addition = False):
     elif do_addition:
         aug = add_frequencies(data, aug_ratio=0.2)
     else:
-        return None
+        return data
     return aug
 
 def remove_frequencies(data, aug_ratio=0):

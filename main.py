@@ -22,8 +22,10 @@ target_dataset = "Epilepsy"
 configs = SleepEEG_Config()
 sourcedata_path = os.path.join("datasets", source_dataset)
 targetdata_path = os.path.join("datasets", target_dataset)
+# This function decides which augmentations are used, as data are augmented within the TimeSeriesDataSet class
 train_loader, valid_loader, test_loader = data_generator(sourcedata_path=sourcedata_path, targetdata_path=targetdata_path,
-                                                         config = configs, augment=True, jitter=True, scaling=True)
+                                                         config = configs, augment=True, jitter=True, scaling=True,
+                                                         addition=True)
 
 TFC_model = TFC_Classifer(configs = configs)
 classifier = target_classifier(configs).to(device = None)

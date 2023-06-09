@@ -162,9 +162,16 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
         loss.backward()
         model_optimizer.step()
         print(f"Finished optimizing batch {batch_idx}.")
-
+        
+        if batch_idx % 5:
+            total_loss_c_intermediate = torch.tensor(total_loss_c)
+            total_loss_f_intermediate = torch.tensor(total_loss_f)
+            total_loss_t_intermediate = torch.tensor(total_loss_t)
+            torch.save(total_loss_c_intermediate, os.path.join("Loss values", "total_loss_c_intermediate.pt"))
+            torch.save(total_loss_f_intermediate, os.path.join("Loss values", "total_loss_f_intermediate.pt"))
+            torch.save(total_loss_t_intermediate, os.path.join("Loss values", "total_loss_t_intermediate.pt"))
         # Terminate early if a certain threshold is reached (for testing compilation)
-        terminate_threshold = 999999
+        terminate_threshold = 5
         if i > terminate_threshold:
             break
 
@@ -246,6 +253,16 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
         loss.backward()
         model_optimizer.step()
         classifier_optimizer.step()
+
+        if batch_idx % 5:
+            total_loss_c_fine_intermediate = torch.tensor(total_loss_c)
+            total_loss_f_fine_intermediate = torch.tensor(total_loss_f)
+            total_loss_t_fine_intermediate = torch.tensor(total_loss_t)
+            total_acc_fine_intermediate = torch.tensor(total_acc)
+            torch.save(total_acc_fine_intermediate, os.path.join("Loss values", "total_acc_fine_intermediate.pt"))
+            torch.save(total_loss_c_fine_intermediate, os.path.join("Loss values", "total_loss_c_fine_intermediate.pt"))
+            torch.save(total_loss_f_fine_intermediate, os.path.join("Loss values", "total_loss_f_fine_intermediate.pt"))
+            torch.save(total_loss_t_fine_intermediate, os.path.join("Loss values", "total_loss_t_fine_intermediate.pt"))
 
         if training_mode != "pre_train":
             pred = predictions.max(1, keepdim=True)[1]  # get the index of the max log-probability

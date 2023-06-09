@@ -1,8 +1,9 @@
 import torch
 import numpy as np
 from transforms3d.axangles import axangle2mat
+from scipy.spatial.distance import cdist
 
-def augment_Data_TD(data, configs, do_jitter = False, do_scaling = False, do_permute = False, do_rotation = False):
+def augment_Data_TD(data, configs, do_jitter = False, do_scaling = False, do_permute = False, do_rotation = False, do_mag_warp = False):
     if do_jitter and do_scaling:
         aug = jitter(scaling(data, configs), configs)
     elif do_jitter:
@@ -13,6 +14,8 @@ def augment_Data_TD(data, configs, do_jitter = False, do_scaling = False, do_per
         aug = permute(data)
     elif do_rotation:
         aug = rotation(data)
+    elif do_mag_warp:
+        aug = mag_warp(data)
     else:
         return data
     return aug
@@ -70,6 +73,18 @@ def rotation(data):
     axis = np.random.uniform(low=-1, high=1, size=data.shape[1])
     angle = np.random.uniform(low=-np.pi, high=np.pi)
     return np.matmul(data , axangle2mat(axis,angle))
+
+def mag_warp(data, lengthscale=10, variance=1e-1):
+    def squared_exponential_kernel(x, y, lengthscale, variance):
+        sqdist = cdist(
+            x.reshape(-1,1),y.reshape(-1,1),'sqeuclidean')
+        k =  variance*np.exp(-sqdist/(2*lengthscale**2))
+        return k
+    x = np.arange(data.shape[2])
+    mu = np.ones(data.shape[2])
+    covariance = squared_exponential_kernel(x, x, lengthscale,variance)
+    ys = np.random.multivariate_normal(mu, covariance, size = data.shape[0])
+    return np.multiply(data, np.expand_dims(ys, axis=1))
 
 """def permute(data, NSeg = 5):
     import time

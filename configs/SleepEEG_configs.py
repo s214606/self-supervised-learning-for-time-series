@@ -18,7 +18,7 @@ class Config(object):
         self.CNNoutput_channel = 10 # 90 # 10 for Epilepsy model
 
         # training configs
-        self.num_epoch = 2 #40
+        self.num_epoch = 40 #40
 
 
         # optimizer parameters

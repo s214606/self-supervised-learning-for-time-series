@@ -27,15 +27,17 @@ train_loader, valid_loader, test_loader = data_generator(sourcedata_path=sourced
                                                          config = configs, augment=True, jitter=True, scaling=True,
                                                          addition=True)
 
-TFC_model = TFC_Classifer(configs = configs)
-classifier = target_classifier(configs).to(device = None)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Running on {device}")
+
+TFC_model = TFC_Classifer(configs = configs).to(device)
+classifier = target_classifier(configs).to(device)
 
 temporal_contr_model = None
 temporal_contr_optimizer = None
 
 model_optimizer = torch.optim.Adam(TFC_model.parameters(), lr = configs.lr, betas = (configs.beta1, configs.beta2), weight_decay = 3e-4)
 classifier_optimizer = torch.optim.Adam(classifier.parameters(), lr = configs.lr, betas = (configs.beta1, configs.beta2), weight_decay = 3e-4)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 """Pre-train a model"""
 Trainer(TFC_model, temporal_contr_model, model_optimizer, temporal_contr_optimizer, train_loader, valid_loader, test_loader,
         device = device, logger = None, config = configs, experiment_log_dir = os.getcwd(), training_mode = "pre_train",

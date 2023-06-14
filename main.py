@@ -10,13 +10,16 @@ from DataLoader import data_generator
 from Trainer import Trainer, model_finetune, model_test
 from configs.SleepEEG_configs import Config as SleepEEG_Config
 from configs.Epilepsy_configs import Config as Epilepsy_Config
+from DataloaderNyt import data_generator as data_generator_nyt
+from configs.wisdm_configs import Config as wisdm_Config
+
 
 """Train and validate a model.
 First, a parser is prepared to save the relevant information relating to the training run"""
 
 start_time = datetime.now()
 
-"""The Trainer method requires a model and a dataset at its most basic, as well as configs for the dataset."""
+# """The Trainer method requires a model and a dataset at its most basic, as well as configs for the dataset."""
 source_dataset = "SleepEEG" # This needs to be changed to the correct dataset
 target_dataset = "Epilepsy"
 configs = SleepEEG_Config()
@@ -26,6 +29,14 @@ targetdata_path = os.path.join("datasets", target_dataset)
 train_loader, valid_loader, test_loader = data_generator(sourcedata_path=sourcedata_path, targetdata_path=targetdata_path,
                                                          config = configs, augment=True, jitter=True, scaling=True,
                                                          addition=True)
+
+#Dataloader for WISDM dataset
+configs = wisdm_Config()
+train_loader, valid_loader, test_loader = data_generator_nyt(sourcedata_path_X = "datasets\wisdm-dataset_processed\phoneAccel\X_train.pt",sourcedata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_train.pt",
+                                                         targetdata_path_X="datasets\wisdm-dataset_processed\phoneAccel\X_Val.pt",targetdata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_Val.pt",
+                                                         config = configs, augment = None, jitter = None, scaling = None, rotation = None, removal = None, addition = None)
+
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Running on {device}")

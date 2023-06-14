@@ -37,7 +37,12 @@ class WISDMDataset(Dataset):
             
         with open(Ypath, 'rb') as f:
             self.Y = torch.load(f)
-  
+        
+        self.X = self.X[:,:,1:]
+        self.X = self.X.permute(0,2,1)
+        #reshape X array to go from 3 channels to 1 channel
+        self.X = self.X.reshape(self.X.shape[0], 1, self.X.shape[1]*self.X.shape[2])
+        
         self.X_aug = None
         self.X_f_aug = None
         self.y_aug = None
@@ -55,11 +60,11 @@ class WISDMDataset(Dataset):
     
     def __getitem__(self, idx):
         if self.augment:
-            return self.X[idx, :, :], self.Y[idx, :, :], self.X_aug[idx, :, :],  \
-                self.X_f[idx, :, :], self.X_f_aug[idx, :, :]
+            return self.X[idx, :], self.Y[idx, :], self.X_aug[idx, :],  \
+                self.X_f[idx, :], self.X_f_aug[idx, :]
         else:
-            return self.X[idx, :, :], self.Y[idx, :, :], self.X[idx, :, :],  \
-                self.X_f[idx, :, :], self.X_f[idx, :, :]
+            return self.X[idx, :], self.Y[idx, :], self.X[idx, :],  \
+                self.X_f[idx, :], self.X_f[idx, :]
         
 def data_generator(sourcedata_path_X, sourcedata_path_Y, targetdata_path_X, targetdata_path_Y, config, 
                    augment = False, jitter = False, scaling = False, rotation = False,
@@ -89,6 +94,8 @@ if __name__ == '__main__':
     print(dataset.__len__())
     print(dataset.__getitem__(0))
     print(dataset[0])
+    print(dataset.X.shape)
+    
     # train_loader, valid_loader, test_loader = data_generator(sourcedata_path_X = "datasets\wisdm-dataset_processed\phoneAccel\X_train.pt",sourcedata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_train.pt",
     #                                                          targetdata_path_X="datasets\wisdm-dataset_processed\phoneAccel\X_Val.pt",targetdata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_Val.pt",
     #                                                          config = config, augment = None, jitter = None, scaling = None, rotation = None, removal = None, addition = None)

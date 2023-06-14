@@ -171,7 +171,7 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
             torch.save(total_loss_f_intermediate, os.path.join("Loss values", "total_loss_f_intermediate.pt"))
             torch.save(total_loss_t_intermediate, os.path.join("Loss values", "total_loss_t_intermediate.pt"))
         # Terminate early if a certain threshold is reached (for testing compilation)
-        terminate_threshold = 5
+        terminate_threshold = 999999
         if i > terminate_threshold:
             break
 

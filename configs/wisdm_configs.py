@@ -18,7 +18,7 @@ class Config(object):
         self.CNNoutput_channel = 10 # 90 # 10 for Epilepsy model
 
         # training configs
-        self.num_epoch = 40 #40
+        self.num_epoch = 2 #40
 
 
         # optimizer parameters
@@ -32,7 +32,7 @@ class Config(object):
         self.drop_last = True
         self.batch_size = 128
         """For Epilepsy, the target batchsize is 60"""
-        self.target_batch_size = 60   # the size of target dataset (the # of samples used to fine-tune).
+        self.target_batch_size = 128   # the size of target dataset (the # of samples used to fine-tune).
 
         self.Context_Cont = Context_Cont_configs()
         self.TC = TC()

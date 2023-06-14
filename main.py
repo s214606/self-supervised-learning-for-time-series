@@ -11,6 +11,10 @@ from Trainer import Trainer, model_finetune, model_test
 from configs.SleepEEG_configs import Config as SleepEEG_Config
 from configs.Epilepsy_configs import Config as Epilepsy_Config
 
+seed = 32
+np.random.seed(seed)
+torch.manual_seed(seed)
+
 """Train and validate a model.
 First, a parser is prepared to save the relevant information relating to the training run"""
 

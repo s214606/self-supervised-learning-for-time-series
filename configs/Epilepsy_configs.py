@@ -12,6 +12,9 @@ class Config(object):
         self.features_len = 24
         self.features_len_f = 24 # 13 #self.features_len   # the output results in time domain
 
+
+        self.TSlength_aligned = 178
+
         # training configs
         self.num_epoch = 40 # 40
         
@@ -49,3 +52,5 @@ class TC(object):
     def __init__(self):
         self.hidden_dim = 100
         self.timesteps = 10
+        
+        

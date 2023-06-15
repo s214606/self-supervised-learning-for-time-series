@@ -133,6 +133,10 @@ datasets
 Article data npy
 *.pt
 
+## ignore datafordeling files
+datafordeling
+
+
 ## Ignore virtual environment (name of venv + /)
 ProjWorkEnv
 SubProj/

@@ -15,13 +15,19 @@ import torch.fft as fft
 
 #load dataset
 class WISDMDataset():
-    def __init__(self, sensorDevice:str = 'phone', sensor:str = 'accel', testSize = 0.2, valSize = 0.2, windowSize = 128):
+    def __init__(self, sensorDevice:str = 'phone', sensor:str = 'accel', testSize = 0.2, valSize = 0.2, windowSize = 128, 
+                 trainIdx = None, testIdx = None, valIdx = None):
         # #Local config
         self.seed = 0
         np.random.seed(self.seed)
         self.testSize = testSize
         self.trainSize = 1 - testSize - valSize
         self.valSize = valSize/(1 - testSize)
+        self.trainIdx = trainIdx
+        self.testIdx = testIdx
+        self.valIdx = valIdx
+        
+        
         
         self.windowSize = windowSize
         self.sensorDevice = sensorDevice #is phone or watch
@@ -39,8 +45,9 @@ class WISDMDataset():
         labelEncoder = LabelEncoder()
         
         #Split NSamples into train and test lists of integers between 0 and NSamples, with train test split from sklearn
-        self.trainIdx, self.testIdx = train_test_split(np.arange(self.NSamples), test_size = self.testSize, random_state = self.seed, shuffle = True)
-        self.trainIdx, self.valIdx = train_test_split(self.trainIdx, test_size = self.valSize, random_state = self.seed, shuffle = True)
+        if type(self.trainIdx) == type(None) and type(self.testIdx) == type(None) and type(self.valIdx) == type(None):
+            self.trainIdx, self.testIdx = train_test_split(np.arange(self.NSamples), test_size = self.testSize, random_state = self.seed, shuffle = True)
+            self.trainIdx, self.valIdx = train_test_split(self.trainIdx, test_size = self.valSize, random_state = self.seed, shuffle = True)
         
         
         
@@ -120,19 +127,22 @@ class WISDMDataset():
         if os.path.exists("datasets\\wisdm-dataset_processed") == False:
             os.mkdir("datasets\\wisdm-dataset_processed")
             
+        if os.path.exists(f"datasets\\wisdm-dataset_processed\\{self.sensorDevice}{self.sensor}") == False:
+            os.mkdir(f"datasets\\wisdm-dataset_processed\\{self.sensorDevice}{self.sensor}")
+            
         for nameSet, iSet in zip(["train", "test", "val"], [self.trainIdx, self.testIdx, self.valIdx]):
             person_map = {idx: self.filenames[idx] for idx in iSet}
 
             #Save X data
-            with open(f"datasets\\wisdm-dataset_processed\\X_{nameSet}.pt", "wb+") as f:
+            with open(f"datasets\\wisdm-dataset_processed\\{self.sensorDevice}{self.sensor}\\X_{nameSet}.pt", "wb+") as f:
                 torch.save(self.X[nameSet], f)
                 
             #Save activity labels
-            with open(f"datasets\\wisdm-dataset_processed\\Y_{nameSet}.pt", "wb+") as f:
+            with open(f"datasets\\wisdm-dataset_processed\\{self.sensorDevice}{self.sensor}\\Y_{nameSet}.pt", "wb+") as f:
                 torch.save(self.Y[nameSet], f)
                 
             #Save person indexes
-            with open(f"datasets\\wisdm-dataset_processed\\{nameSet}Idx.pt", "wb+") as f:
+            with open(f"datasets\\wisdm-dataset_processed\\{self.sensorDevice}{self.sensor}\\{nameSet}Idx.pt", "wb+") as f:
                 torch.save(person_map, f)
 
         

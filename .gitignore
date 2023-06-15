@@ -133,6 +133,8 @@ datasets
 Article data npy
 *.pt
 
+
+
 ## Ignore virtual environment (name of venv + /)
 ProjWorkEnv
 SubProj/

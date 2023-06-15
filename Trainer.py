@@ -173,6 +173,17 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
         # Produce embeddings of the data using the model's forward method (simply by calling the model)
         h_t, z_t, h_f, z_f = model(data, data_f)
         h_t_aug, z_t_aug, h_f_aug, z_f_aug = model(data_aug, data_f_aug)
+
+        if config.save_embeddings:
+            path = os.path.join("Analysis", "Embeddings")
+            torch.save(h_t, os.path.join(path, "h_t.pt"))
+            torch.save(h_f, os.path.join(path, "h_f.pt"))
+            torch.save(h_t_aug, os.path.join(path, "h_t_aug.pt"))
+            torch.save(h_f_aug, os.path.join(path, "h_f_aug.pt"))
+            torch.save(z_t, os.path.join(path, "z_t.pt"))
+            torch.save(z_f, os.path.join(path, "z_f.pt"))
+            torch.save(z_t_aug, os.path.join(path, "z_t_aug.pt"))
+            torch.save(z_f_aug, os.path.join(path, "z_f_aug.pt"))
         
         # Compute the losses for time and frequency domain
         loss_t = nt_xent_criterion(h_t, h_t_aug)

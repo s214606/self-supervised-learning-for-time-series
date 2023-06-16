@@ -2,17 +2,19 @@ import torch
 import os
 
 def load_embeddings(map_location='cpu', path=os.path.join("Analysis","Embeddings")):
-    h_t = torch.load(os.path.join(path, "h_t.pt"), map_location).detach().numpy()
-    h_f = torch.load(os.path.join(path, "h_f.pt"), map_location).detach().numpy()
-    h_t_aug = torch.load(os.path.join(path, "h_t_aug.pt"), map_location).detach().numpy()
-    h_f_aug = torch.load(os.path.join(path, "h_f_aug.pt"), map_location).detach().numpy()
-    z_t = torch.load(os.path.join(path, "z_t.pt"), map_location).detach().numpy()
-    z_f = torch.load(os.path.join(path, "z_f.pt"), map_location).detach().numpy()
-    z_t_aug = torch.load(os.path.join(path, "z_t_aug.pt"), map_location).detach().numpy()
-    z_f_aug = torch.load(os.path.join(path, "z_f_aug.pt"), map_location).detach().numpy()
-    return h_t, z_t, h_f, z_f, h_t_aug, z_t_aug, h_f_aug, z_f_aug
+    h_ts = torch.load(os.path.join(path, "h_ts.pt"), map_location)
+    h_fs = torch.load(os.path.join(path, "h_fs.pt"), map_location)
+    h_t_augs = torch.load(os.path.join(path, "h_t_augs.pt"), map_location)
+    h_f_augs = torch.load(os.path.join(path, "h_f_augs.pt"), map_location)
+    z_ts = torch.load(os.path.join(path, "z_ts.pt"), map_location)
+    z_fs = torch.load(os.path.join(path, "z_fs.pt"), map_location)
+    z_t_augs = torch.load(os.path.join(path, "z_t_augs.pt"), map_location)
+    z_f_augs = torch.load(os.path.join(path, "z_f_augs.pt"), map_location)
+    return h_ts, z_ts, h_fs, z_fs, h_t_augs, z_t_augs, h_f_augs, z_f_augs
 
 ### Example: ###
 
-# from load import load_embeddings
-# h_t, z_t, h_f, z_f, h_t_aug, z_t_aug, h_f_aug, z_f_aug = load_embeddings()
+# from Analysis.load import load_embeddings
+# h_ts, z_ts, h_fs, z_fs, h_t_augs, z_t_augs, h_f_augs, z_f_augs = load_embeddings()
+
+h_ts, z_ts, h_fs, z_fs, h_t_augs, z_t_augs, h_f_augs, z_f_augs = load_embeddings()

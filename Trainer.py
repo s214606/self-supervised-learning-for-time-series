@@ -15,6 +15,26 @@ from Loss_functions import *
 
 from tqdm import tqdm
 
+os.makedirs(os.path.join("Analysis", "Embeddings"), exist_ok=True)
+path = os.path.join("Analysis", "Embeddings")
+
+h_ts = []
+h_fs = []
+h_t_augs = []
+h_f_augs = []
+z_ts = []
+z_fs = []
+z_t_augs = []
+z_f_augs = []
+h_tsf = []
+h_fsf = []
+h_t_augsf = []
+h_f_augsf = []
+z_tsf = []
+z_fsf = []
+z_t_augsf = []
+z_f_augsf = []
+
 def one_hot_encoding(X):
     X = [int(x) for x in X]
     n_values = np.max(X) + 1
@@ -39,7 +59,14 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
             train_loss, train_acc, train_auc, total_loss_c_pre, total_loss_f_pre, total_loss_t_pre = model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optimizer,
                                                               train_dl, config, device, training_mode, model_F = model_F,
                                                               model_F_optimizer = model_F_optimizer)
-            
+            torch.save(h_ts, os.path.join(path, "h_ts.pt"))
+            torch.save(h_fs, os.path.join(path, "h_fs.pt"))
+            torch.save(h_t_augs, os.path.join(path, "h_t_augs.pt"))
+            torch.save(h_f_augs, os.path.join(path, "h_f_augs.pt"))
+            torch.save(z_ts, os.path.join(path, "z_ts.pt"))
+            torch.save(z_fs, os.path.join(path, "z_fs.pt"))
+            torch.save(z_t_augs, os.path.join(path, "z_t_augs.pt"))
+            torch.save(z_f_augs, os.path.join(path, "z_f_augs.pt"))
             print(f'\nPre-training Epoch : {epoch} of {config.num_epoch}\n'
                          f'Train Loss     : {train_loss:.4f}\t | \tTrain Accuracy     : {train_acc:2.4f}\t | \tTrain AUC : {train_auc:2.4f}\n'
                          )
@@ -64,6 +91,14 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
         torch.save(total_losses, os.path.join("Loss values", "total_losses_pre.pt"))
         torch.save(total_train_loss_tensor, os.path.join("Loss values", "train_loss_pre.pt"))
         torch.save(total_train_acc_tensor, os.path.join("Loss values", "train_acc.pt"))
+        torch.save(h_tsf, os.path.join(path, "h_tsf.pt"))
+        torch.save(h_fsf, os.path.join(path, "h_fsf.pt"))
+        torch.save(h_t_augsf, os.path.join(path, "h_t_augsf.pt"))
+        torch.save(h_f_augsf, os.path.join(path, "h_f_augsf.pt"))
+        torch.save(z_tsf, os.path.join(path, "z_tsf.pt"))
+        torch.save(z_fsf, os.path.join(path, "z_fsf.pt"))
+        torch.save(z_t_augsf, os.path.join(path, "z_t_augsf.pt"))
+        torch.save(z_f_augsf, os.path.join(path, "z_f_augsf.pt"))
         #total_loss_c_pre = torch.tensor(total_loss_c_pre)
         #total_loss_f_pre = torch.tensor(total_loss_f_pre)
         #total_loss_t_pre = torch.tensor(total_loss_t_pre)
@@ -174,16 +209,14 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
         h_t, z_t, h_f, z_f = model(data, data_f)
         h_t_aug, z_t_aug, h_f_aug, z_f_aug = model(data_aug, data_f_aug)
 
-        if config.save_embeddings:
-            path = os.path.join("Analysis", "Embeddings")
-            torch.save(h_t, os.path.join(path, "h_t.pt"))
-            torch.save(h_f, os.path.join(path, "h_f.pt"))
-            torch.save(h_t_aug, os.path.join(path, "h_t_aug.pt"))
-            torch.save(h_f_aug, os.path.join(path, "h_f_aug.pt"))
-            torch.save(z_t, os.path.join(path, "z_t.pt"))
-            torch.save(z_f, os.path.join(path, "z_f.pt"))
-            torch.save(z_t_aug, os.path.join(path, "z_t_aug.pt"))
-            torch.save(z_f_aug, os.path.join(path, "z_f_aug.pt"))
+        h_ts.append(h_t)
+        h_fs.append(h_f)
+        h_t_augs.append(h_t_aug)
+        h_f_augs.append(h_f_aug)
+        z_ts.append(z_t)
+        z_fs.append(z_f)
+        z_t_augs.append(z_t_aug)
+        z_f_augs.append(z_f_aug)
         
         # Compute the losses for time and frequency domain
         loss_t = nt_xent_criterion(h_t, h_t_aug)
@@ -265,6 +298,15 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
         h_t, z_t, h_f, z_f=model(data, data_f)
         h_t_aug, z_t_aug, h_f_aug, z_f_aug=model(aug1, aug1_f)
 
+        h_tsf.append(h_t)
+        h_fsf.append(h_f)
+        h_t_augsf.append(h_t_aug)
+        h_f_augsf.append(h_f_aug)
+        z_tsf.append(z_t)
+        z_fsf.append(z_f)
+        z_t_augsf.append(z_t_aug)
+        z_f_augsf.append(z_f_aug)
+
         nt_xent_criterion = NTXentLoss_poly(device, config.target_batch_size, config.Context_Cont.temperature,
                                             config.Context_Cont.use_cosine_similarity)
         loss_t = nt_xent_criterion(h_t, h_t_aug)
@@ -280,7 +322,7 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
 
         """Add supervised classifier: 1) it's unique to finetuning. 2) this classifier will also be used in test"""
         fea_concat = torch.cat((z_t, z_f), dim=1)
-        predictions = classifier(fea_concat) # how to define classifier? MLP? CNN?
+        predictions = classifier(fea_concat)
         fea_concat_flat = fea_concat.reshape(fea_concat.shape[0], -1)
         loss_p = criterion(predictions, labels) # predictor loss, actually, here is training loss
 
@@ -317,6 +359,7 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
             outs = np.append(outs, pred.cpu().numpy())
             trgs = np.append(trgs, labels.data.cpu().numpy())
         
+        print(f"Finished optimizing batch {i}.")
         terminate_threshold = 999999
         if i > terminate_threshold:
             break

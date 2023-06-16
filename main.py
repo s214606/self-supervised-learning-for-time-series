@@ -14,6 +14,10 @@ from DataloaderNyt import data_generator as data_generator_nyt
 from configs.wisdm_configs import Config as wisdm_Config
 
 
+seed = 32
+np.random.seed(seed)
+torch.manual_seed(seed)
+
 """Train and validate a model.
 First, a parser is prepared to save the relevant information relating to the training run"""
 
@@ -31,10 +35,10 @@ train_loader, valid_loader, test_loader = data_generator(sourcedata_path=sourced
                                                          addition=False, permute = False, rotation = True)
 
 #Dataloader for WISDM dataset
-# configs = wisdm_Config()
-# train_loader, valid_loader, test_loader = data_generator_nyt(sourcedata_path_X = "datasets\wisdm-dataset_processed\phoneAccel\X_train.pt",sourcedata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_train.pt",
-#                                                          targetdata_path_X="datasets\wisdm-dataset_processed\phoneAccel\X_Val.pt",targetdata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_Val.pt",
-#                                                          config = configs, augment = None, jitter = None, scaling = None, rotation = None, removal = None, addition = None)
+configs = wisdm_Config()
+train_loader, valid_loader, test_loader = data_generator_nyt(sourcedata_path_X = "datasets\wisdm-dataset_processed\phoneAccel\X_train.pt",sourcedata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_train.pt",
+                                                         targetdata_path_X="datasets\wisdm-dataset_processed\phoneAccel\X_Val.pt",targetdata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_Val.pt",
+                                                         config = configs, augment = None, jitter = None, scaling = None, rotation = None, removal = None, addition = None)
 
 
 

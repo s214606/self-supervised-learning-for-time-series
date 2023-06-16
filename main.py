@@ -27,8 +27,8 @@ sourcedata_path = os.path.join("datasets", source_dataset)
 targetdata_path = os.path.join("datasets", target_dataset)
 # This function decides which augmentations are used, as data are augmented within the TimeSeriesDataSet class
 train_loader, valid_loader, test_loader = data_generator(sourcedata_path=sourcedata_path, targetdata_path=targetdata_path,
-                                                         config = configs, augment=True, jitter=True, scaling=True,
-                                                         addition=True)
+                                                         config = configs, augment=True, jitter=False, scaling=False,
+                                                         addition=False, permute = False, rotation = True)
 
 #Dataloader for WISDM dataset
 # configs = wisdm_Config()

@@ -4,21 +4,17 @@ from transforms3d.axangles import axangle2mat
 from scipy.spatial.distance import cdist
 
 def augment_Data_TD(data, configs, do_jitter = False, do_scaling = False, do_permute = False, do_rotation = False, do_mag_warp = False):
-    if do_jitter and do_scaling:
-        aug = jitter(scaling(data, configs), configs)
-    elif do_jitter:
-        aug = jitter(data, configs)
-    elif do_scaling:
-        aug = scaling(data, configs)
-    elif do_permute:
-        aug = permute(data)
-    elif do_rotation:
-        aug = rotation(data)
-    elif do_mag_warp:
-        aug = mag_warp(data)
-    else:
-        return data
-    return aug
+    if do_scaling:
+        data = scaling(data, configs)
+    if do_jitter:
+        data = jitter(data, configs)
+    if do_permute:
+        data = permute(data)
+    if do_rotation:
+        data = rotation(data)
+    if do_mag_warp:
+        data = mag_warp(data)
+    return data
 
 def augment_Data_FD(data, do_removal = False, do_addition = False):
     if do_removal:

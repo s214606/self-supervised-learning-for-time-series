@@ -38,6 +38,9 @@ class Config(object):
         self.TC = TC()
         self.augmentation = augmentations()
 
+        # Other
+        self.save_embeddings = True
+
 class augmentations(object):
     def __init__(self):
         self.jitter_scale_ratio = 1.5

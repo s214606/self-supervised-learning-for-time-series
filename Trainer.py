@@ -13,6 +13,28 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from Loss_functions import *
 
+from tqdm import tqdm
+
+os.makedirs(os.path.join("Analysis", "Embeddings"), exist_ok=True)
+path = os.path.join("Analysis", "Embeddings")
+
+h_ts = []
+h_fs = []
+h_t_augs = []
+h_f_augs = []
+z_ts = []
+z_fs = []
+z_t_augs = []
+z_f_augs = []
+h_tsf = []
+h_fsf = []
+h_t_augsf = []
+h_f_augsf = []
+z_tsf = []
+z_fsf = []
+z_t_augsf = []
+z_f_augsf = []
+
 def one_hot_encoding(X):
     X = [int(x) for x in X]
     n_values = np.max(X) + 1
@@ -29,15 +51,32 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
 
     """Pre-training for pre-training a model on labelled data, decided by the "training_mode" parameter."""
     if training_mode == "pre_train":
+        loss_list = []
+        total_train_loss = []
+        total_train_acc = []
         for epoch in range(1, config.num_epoch + 1):
             print(f"Started pre-training Epoch {epoch}.")
             train_loss, train_acc, train_auc, total_loss_c_pre, total_loss_f_pre, total_loss_t_pre = model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optimizer,
                                                               train_dl, config, device, training_mode, model_F = model_F,
                                                               model_F_optimizer = model_F_optimizer)
-            
+            torch.save(h_ts, os.path.join(path, "h_ts.pt"))
+            torch.save(h_fs, os.path.join(path, "h_fs.pt"))
+            torch.save(h_t_augs, os.path.join(path, "h_t_augs.pt"))
+            torch.save(h_f_augs, os.path.join(path, "h_f_augs.pt"))
+            torch.save(z_ts, os.path.join(path, "z_ts.pt"))
+            torch.save(z_fs, os.path.join(path, "z_fs.pt"))
+            torch.save(z_t_augs, os.path.join(path, "z_t_augs.pt"))
+            torch.save(z_f_augs, os.path.join(path, "z_f_augs.pt"))
             print(f'\nPre-training Epoch : {epoch} of {config.num_epoch}\n'
                          f'Train Loss     : {train_loss:.4f}\t | \tTrain Accuracy     : {train_acc:2.4f}\t | \tTrain AUC : {train_auc:2.4f}\n'
                          )
+            c_loss = torch.stack(total_loss_c_pre).mean()
+            f_loss = torch.stack(total_loss_f_pre).mean()
+            t_loss = torch.stack(total_loss_t_pre).mean()
+            losses = torch.tensor([c_loss, f_loss, t_loss])
+            loss_list.append(losses)
+            total_train_loss.append(train_loss)
+            total_train_acc.append(train_acc)
         # Save the model
         os.makedirs(os.path.join("Saved models"), exist_ok=True) # only save in self_supervised mode.
         chkpoint = {'model_state_dict': model.state_dict(),}
@@ -46,18 +85,37 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
     
         print("Training finished.")
         #Save loss values
-        total_loss_c_pre = torch.tensor(total_loss_c_pre)
-        total_loss_f_pre = torch.tensor(total_loss_f_pre)
-        total_loss_t_pre = torch.tensor(total_loss_t_pre)
-        torch.save(total_loss_c_pre, os.path.join("Loss values", "total_loss_c_pre.pt"))
-        torch.save(total_loss_f_pre, os.path.join("Loss values", "total_loss_f_pre.pt"))
-        torch.save(total_loss_t_pre, os.path.join("Loss values", "total_loss_t_pre.pt"))
+        total_losses = torch.stack(loss_list)
+        total_train_loss_tensor = torch.tensor(total_train_loss)
+        total_train_acc_tensor = torch.tensor(total_train_acc)
+        torch.save(total_losses, os.path.join("Loss values", "total_losses_pre.pt"))
+        torch.save(total_train_loss_tensor, os.path.join("Loss values", "train_loss_pre.pt"))
+        torch.save(total_train_acc_tensor, os.path.join("Loss values", "train_acc.pt"))
+        torch.save(h_tsf, os.path.join(path, "h_tsf.pt"))
+        torch.save(h_fsf, os.path.join(path, "h_fsf.pt"))
+        torch.save(h_t_augsf, os.path.join(path, "h_t_augsf.pt"))
+        torch.save(h_f_augsf, os.path.join(path, "h_f_augsf.pt"))
+        torch.save(z_tsf, os.path.join(path, "z_tsf.pt"))
+        torch.save(z_fsf, os.path.join(path, "z_fsf.pt"))
+        torch.save(z_t_augsf, os.path.join(path, "z_t_augsf.pt"))
+        torch.save(z_f_augsf, os.path.join(path, "z_f_augsf.pt"))
+        #total_loss_c_pre = torch.tensor(total_loss_c_pre)
+        #total_loss_f_pre = torch.tensor(total_loss_f_pre)
+        #total_loss_t_pre = torch.tensor(total_loss_t_pre)
+        #torch.save(total_loss_c_pre, os.path.join("Loss values", "total_loss_c_pre.pt"))
+        #torch.save(total_loss_f_pre, os.path.join("Loss values", "total_loss_f_pre.pt"))
+        #torch.save(total_loss_t_pre, os.path.join("Loss values", "total_loss_t_pre.pt"))
+
 
     """Fine-tuning and test"""
     if training_mode != "pre_train":
         print("Fine-tuning started!")
         performance_list = []
         total_f1 = []
+        total_valid_loss = []
+        total_test_loss = []
+        total_test_acc = []
+        total_valid_acc = []
         for epoch in range(1, config.num_epoch + 1):
             valid_loss, valid_acc, valid_auc, valid_prc, emb_finetune, label_finetune, F1, total_loss_c_fine, total_loss_f_fine, total_loss_t_fine = model_finetune(model, temporal_contr_model,
                                                             valid_dl, config, device, training_mode, model_optimizer,
@@ -70,17 +128,31 @@ def Trainer(model,  temporal_contr_model, model_optimizer, temp_cont_optimizer, 
             test_loss, test_acc, test_auc, test_prc, emb_test, label_test, performance = model_test(model,
                                                     test_dl, config, device, training_mode, classifier = classifier)
             performance_list.append(performance)
+            total_valid_loss.append(valid_loss)
+            total_test_loss.append(test_loss)
+            total_valid_acc.append(valid_acc)
+            total_test_acc.append(test_acc)
     
         performance_array = np.array(performance_list)
         best_performance = performance_array[np.argmax(performance_array[:,0], axis=0)]
         print('Best Testing: Acc=%.4f| Precision = %.4f | Recall = %.4f | F1 = %.4f | AUROC= %.4f | PRC=%.4f'
             % (best_performance[0], best_performance[1], best_performance[2], best_performance[3], best_performance[4], best_performance[5]))
         # Save loss values
+        total_valid_acc_tensor = torch.tensor(total_valid_acc)
+        total_test_acc_tensor = torch.tensor(total_test_acc)
+        total_valid_loss_tensor = torch.tensor(total_valid_loss)
+        total_test_loss_tensor = torch.tensor(total_test_loss)
         total_loss_c_fine = torch.tensor(total_loss_c_fine)
         total_loss_f_fine = torch.tensor(total_loss_f_fine)
         total_loss_t_fine = torch.tensor(total_loss_t_fine)
+        running_performance = torch.tensor(performance_array)
         best_performance = torch.tensor(best_performance)
-        torch.save(best_performance, os.path.join("Loss values", "best_performance.pt"))
+        torch.save(total_test_acc_tensor, os.path.join("Loss values", "test_acc.pt"))
+        torch.save(total_valid_acc_tensor, os.path.join("Loss values", "valid_acc.pt"))
+        torch.save(total_test_loss_tensor, os.path.join("Loss values", "test_loss.pt"))
+        torch.save(total_valid_loss_tensor, os.path.join("Loss values", "valid_loss_fine.pt"))
+        torch.save(running_performance, os.path.join("Loss values", "test_performance.pt"))
+        torch.save(best_performance, os.path.join("Loss values", "best_test_performance.pt"))
         torch.save(total_loss_c_fine, os.path.join("Loss values", "total_loss_c_fine.pt"))
         torch.save(total_loss_f_fine, os.path.join("Loss values", "total_loss_f_fine.pt"))
         torch.save(total_loss_t_fine, os.path.join("Loss values", "total_loss_t_fine.pt"))
@@ -124,7 +196,7 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
                                         config.Context_Cont.use_cosine_similarity)
 
     i = 0
-    for batch_idx, (data, labels, data_aug, data_f, data_f_aug) in enumerate(train_loader):
+    for batch_idx, (data, labels, data_aug, data_f, data_f_aug) in tqdm(enumerate(train_loader), total=len(train_loader)):
         i += 1
         data, labels = data.float().to(device), labels.long().to(device)
         data_aug = data_aug.float().to(device)
@@ -136,6 +208,15 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
         # Produce embeddings of the data using the model's forward method (simply by calling the model)
         h_t, z_t, h_f, z_f = model(data, data_f)
         h_t_aug, z_t_aug, h_f_aug, z_f_aug = model(data_aug, data_f_aug)
+
+        h_ts.append(h_t)
+        h_fs.append(h_f)
+        h_t_augs.append(h_t_aug)
+        h_f_augs.append(h_f_aug)
+        z_ts.append(z_t)
+        z_fs.append(z_f)
+        z_t_augs.append(z_t_aug)
+        z_f_augs.append(z_f_aug)
         
         # Compute the losses for time and frequency domain
         loss_t = nt_xent_criterion(h_t, h_t_aug)
@@ -161,15 +242,15 @@ def model_pretrain(model, temporal_contr_model, model_optimizer, temp_cont_optim
         total_loss.append(loss.item())
         loss.backward()
         model_optimizer.step()
-        print(f"Finished optimizing batch {batch_idx}.")
-        
-        if batch_idx % 5:
-            total_loss_c_intermediate = torch.tensor(total_loss_c)
-            total_loss_f_intermediate = torch.tensor(total_loss_f)
-            total_loss_t_intermediate = torch.tensor(total_loss_t)
-            torch.save(total_loss_c_intermediate, os.path.join("Loss values", "total_loss_c_intermediate.pt"))
-            torch.save(total_loss_f_intermediate, os.path.join("Loss values", "total_loss_f_intermediate.pt"))
-            torch.save(total_loss_t_intermediate, os.path.join("Loss values", "total_loss_t_intermediate.pt"))
+
+        #total_loss_c_intermediate = torch.tensor(total_loss_c)
+        #total_loss_f_intermediate = torch.tensor(total_loss_f)
+        #total_loss_t_intermediate = torch.tensor(total_loss_t)
+        #
+        #if batch_idx % 5:
+        #    torch.save(total_loss_c_intermediate, os.path.join("Loss values", "total_loss_c_intermediate.pt"))
+        #    torch.save(total_loss_f_intermediate, os.path.join("Loss values", "total_loss_f_intermediate.pt"))
+        #    torch.save(total_loss_t_intermediate, os.path.join("Loss values", "total_loss_t_intermediate.pt"))
         # Terminate early if a certain threshold is reached (for testing compilation)
         terminate_threshold = 999999
         if i > terminate_threshold:
@@ -205,7 +286,7 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
     outs = np.array([])
     trgs = np.array([])
     i = 0
-    for data, labels, aug1, data_f, aug1_f in val_dl:
+    for batch_idx, (data, labels, aug1, data_f, aug1_f) in tqdm(enumerate(val_dl), total=len(val_dl)):
         i += 1
         # print('Fine-tuning: {} of target samples'.format(labels.shape[0]))
         data, labels = data.float().to(device), labels.long().to(device)
@@ -216,6 +297,15 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
         """Produce embeddings"""
         h_t, z_t, h_f, z_f=model(data, data_f)
         h_t_aug, z_t_aug, h_f_aug, z_f_aug=model(aug1, aug1_f)
+
+        h_tsf.append(h_t)
+        h_fsf.append(h_f)
+        h_t_augsf.append(h_t_aug)
+        h_f_augsf.append(h_f_aug)
+        z_tsf.append(z_t)
+        z_fsf.append(z_f)
+        z_t_augsf.append(z_t_aug)
+        z_f_augsf.append(z_f_aug)
 
         nt_xent_criterion = NTXentLoss_poly(device, config.target_batch_size, config.Context_Cont.temperature,
                                             config.Context_Cont.use_cosine_similarity)
@@ -254,15 +344,15 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
         model_optimizer.step()
         classifier_optimizer.step()
 
-        if batch_idx % 5:
-            total_loss_c_fine_intermediate = torch.tensor(total_loss_c)
-            total_loss_f_fine_intermediate = torch.tensor(total_loss_f)
-            total_loss_t_fine_intermediate = torch.tensor(total_loss_t)
-            total_acc_fine_intermediate = torch.tensor(total_acc)
-            torch.save(total_acc_fine_intermediate, os.path.join("Loss values", "total_acc_fine_intermediate.pt"))
-            torch.save(total_loss_c_fine_intermediate, os.path.join("Loss values", "total_loss_c_fine_intermediate.pt"))
-            torch.save(total_loss_f_fine_intermediate, os.path.join("Loss values", "total_loss_f_fine_intermediate.pt"))
-            torch.save(total_loss_t_fine_intermediate, os.path.join("Loss values", "total_loss_t_fine_intermediate.pt"))
+        #if batch_idx % 5:
+        #    total_loss_c_fine_intermediate = torch.tensor(total_loss_c)
+        #    total_loss_f_fine_intermediate = torch.tensor(total_loss_f)
+        #    total_loss_t_fine_intermediate = torch.tensor(total_loss_t)
+        #    total_acc_fine_intermediate = torch.tensor(total_acc)
+        #    torch.save(total_acc_fine_intermediate, os.path.join("Loss values", "total_acc_fine_intermediate.pt"))
+        #    torch.save(total_loss_c_fine_intermediate, os.path.join("Loss values", "total_loss_c_fine_intermediate.pt"))
+        #    torch.save(total_loss_f_fine_intermediate, os.path.join("Loss values", "total_loss_f_fine_intermediate.pt"))
+        #    torch.save(total_loss_t_fine_intermediate, os.path.join("Loss values", "total_loss_t_fine_intermediate.pt"))
 
         if training_mode != "pre_train":
             pred = predictions.max(1, keepdim=True)[1]  # get the index of the max log-probability
@@ -273,6 +363,7 @@ def model_finetune(model, temporal_contr_model, val_dl, config, device, training
         terminate_threshold = 999999
         if i > terminate_threshold:
             break
+        #print(f"Finished optimizing batch {batch_idx}.")
 
 
     labels_numpy = labels.detach().cpu().numpy()

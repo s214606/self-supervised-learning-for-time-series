@@ -32,13 +32,14 @@ targetdata_path = os.path.join("datasets", target_dataset)
 # This function decides which augmentations are used, as data are augmented within the TimeSeriesDataSet class
 train_loader, valid_loader, test_loader = data_generator(sourcedata_path=sourcedata_path, targetdata_path=targetdata_path,
                                                          config = configs, augment=True, jitter=True, scaling=True,
-                                                         addition=True)
+                                                         removal=False, addition=True,
+                                                         flip = False, warp = False)
 
 #Dataloader for WISDM dataset
-configs = wisdm_Config()
-train_loader, valid_loader, test_loader = data_generator_nyt(sourcedata_path_X = "datasets\wisdm-dataset_processed\phoneAccel\X_train.pt",sourcedata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_train.pt",
-                                                         targetdata_path_X="datasets\wisdm-dataset_processed\phoneAccel\X_Val.pt",targetdata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_Val.pt",
-                                                         config = configs, augment = None, jitter = None, scaling = None, rotation = None, removal = None, addition = None)
+#configs = wisdm_Config()
+#train_loader, valid_loader, test_loader = data_generator_nyt(sourcedata_path_X = "datasets\wisdm-dataset_processed\phoneAccel\X_train.pt",sourcedata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_train.pt",
+#                                                         targetdata_path_X="datasets\wisdm-dataset_processed\phoneAccel\X_Val.pt",targetdata_path_Y="datasets\wisdm-dataset_processed\phoneAccel\Y_Val.pt",
+#                                                         config = configs, augment = None, jitter = None, scaling = None, rotation = None, removal = None, addition = None)
 
 
 

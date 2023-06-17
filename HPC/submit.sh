@@ -4,7 +4,7 @@
 #BSUB -q hpc
 #BSUB -q gpuv100
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -W 04:00
+#BSUB -W 05:00
 #BSUB -R "rusage[mem=8GB]"
 #BSUB -n 12
 #BSUB -R "span[hosts=1]"

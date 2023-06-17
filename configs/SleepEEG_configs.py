@@ -45,6 +45,7 @@ class augmentations(object):
     def __init__(self):
         self.jitter_scale_ratio = 1.5
         self.jitter_ratio = 2
+        self.scale_ratio = 1.5
         self.max_seg = 12
 
 

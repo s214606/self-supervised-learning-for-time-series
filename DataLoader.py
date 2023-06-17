@@ -21,7 +21,7 @@ class TimeSeriesDataset(Dataset):
     """
     def __init__(self, dataset, config,
                  augment = False,
-                 jitter = False, scaling = False, permute = False, rotation = False, removal = False, addition = False):
+                 jitter = False, scaling = False, permute = False, rotation = False, removal = False, addition = False, flip = False, warp = False):
         self.X = dataset['samples']
         self.y = dataset['labels']
         self.X_aug = None
@@ -51,7 +51,7 @@ class TimeSeriesDataset(Dataset):
         """In order to utilize the functionality of torch.utils.data.Dataloader, it is necessary for the dataloader object
         to implement the __len__ and __getitem__ protocols as methods."""
         if augment: ## Only augment data if we ask for it to be augmented
-            self.X_aug = augment_Data_TD(self.X, config, do_jitter = jitter, do_scaling = scaling, do_rotation = rotation)
+            self.X_aug = augment_Data_TD(self.X, config, do_jitter = jitter, do_scaling = scaling, do_rotation = rotation, do_mag_warp = warp, do_flip = flip)
             self.X_f_aug = augment_Data_FD(self.X_f, do_removal = removal, do_addition = addition)
             
     def __len__(self):
@@ -86,7 +86,7 @@ class TimeSeriesDataset(Dataset):
     
 def data_generator(sourcedata_path, targetdata_path, config, 
                    augment = False, jitter = False, scaling = False, permute = False, rotation = False,
-                   removal = False, addition = False):
+                   removal = False, addition = False, flip = False, warp = False):
     """Load data for pre-training, fine-tuning and for testing."""
     train_dataset = torch.load(os.path.join(sourcedata_path, "train.pt"))
     finetune_dataset = torch.load(os.path.join(targetdata_path, "train.pt"))

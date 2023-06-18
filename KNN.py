@@ -30,5 +30,14 @@ plt.plot(n_neighbors_values, accuracy_values, marker='o', color=colors.secondary
 plt.xlabel('N neighbors')
 plt.ylabel('Accuracy')
 plt.title('KNN accuracy with varying N neighbours')
-plt.grid(True)
 plt.show()
+
+# Metrics
+from sklearn.metrics import precision_score, recall_score, f1_score
+neigh = KNeighborsClassifier(n_neighbors=2)
+neigh.fit(train_fea, train_label)
+print(neigh.score(val_fea, val_label))
+pred = neigh.predict(val_fea)
+print("Precision score:", precision_score(val_label,pred, average='weighted'))
+print("Recall score:", recall_score(val_label,pred, average='weighted'))
+print("F1 score:", f1_score(val_label,pred, average='weighted'))

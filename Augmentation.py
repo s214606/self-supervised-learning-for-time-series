@@ -3,7 +3,7 @@ import numpy as np
 from transforms3d.axangles import axangle2mat
 from scipy.spatial.distance import cdist
 
-def augment_Data_TD(data, configs, do_jitter = False, do_scaling = False, do_permute = False, do_rotation = False, do_mag_warp = False):
+def augment_Data_TD(data, configs, do_jitter = False, do_scaling = False, do_permute = False, do_rotation = False, do_mag_warp = False, do_flip = False):
     if do_jitter and do_scaling:
         aug = jitter(scaling(data, configs), configs)
     elif do_jitter:
@@ -16,6 +16,8 @@ def augment_Data_TD(data, configs, do_jitter = False, do_scaling = False, do_per
         aug = rotation(data)
     elif do_mag_warp:
         aug = mag_warp(data)
+    elif do_flip:
+        aug = flip(data)
     else:
         return data
     return aug
@@ -46,7 +48,7 @@ def jitter(data, configs, sigma = 5):
 
 def scaling(data, configs, sigma = 0.5):
     # Add the same noise to every observation 
-    scalingFactor = np.random.normal(loc = 1.0, scale = configs.augmentation.jitter_scale_ratio, size = (data.shape[0], data.shape[2]))
+    scalingFactor = np.random.normal(loc = 1.0, scale = configs.augmentation.scale_ratio, size = (data.shape[0], data.shape[2]))
     return np.multiply(data, scalingFactor[:, np.newaxis, :])
 
 def permute(x, configs, max_segments=5, seg_mode="random"):
@@ -85,6 +87,9 @@ def mag_warp(data, lengthscale=10, variance=1e-1):
     covariance = squared_exponential_kernel(x, x, lengthscale,variance)
     ys = np.random.multivariate_normal(mu, covariance, size = data.shape[0])
     return np.multiply(data, np.expand_dims(ys, axis=1))
+
+def flip(data):
+    return -data
 
 """def permute(data, NSeg = 5):
     import time
